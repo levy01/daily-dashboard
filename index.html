@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iPad Gym & Work Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome for clean icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter & JetBrains Mono for Gym Clock visual accuracy -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            gymRed: '#ff2a2a',
+            gymGreen: '#10b981',
+            gymAmber: '#f59e0b',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    /* Digital clock LED glow effect */
+    .digital-glow-red {
+      text-shadow: 0 0 25px rgba(255, 42, 42, 0.45), 0 0 50px rgba(255, 42, 42, 0.25);
+    }
+    .digital-glow-green {
+      text-shadow: 0 0 25px rgba(16, 185, 129, 0.45), 0 0 50px rgba(16, 185, 129, 0.25);
+    }
+    /* Custom scrollbar styling for iPad layout */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(51, 65, 85, 0.8);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="h-full w-full overflow-hidden flex flex-col justify-between font-sans bg-slate-950 text-slate-100 select-none">
+
+  <!-- TOP BAR & MODE SWITCHER -->
+  <header class="h-14 px-5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+        <i class="fa-solid font-bold text-base fa-bullseye"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-sm tracking-wide text-slate-100 leading-tight">Kiosk Dashboard</h1>
+        <p class="text-[10px] text-slate-400 font-medium leading-none">iPad Mini 4 • Gym & Work</p>
+      </div>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80">
+      <button id="tab-clock" onclick="switchMode('clock')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-md">
+        <i class="fa-regular fa-clock"></i>
+        <span>Gym Wall Clock</span>
+      </button>
+      <button id="tab-stopwatch" onclick="switchMode('stopwatch')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-stopwatch"></i>
+        <span>Dead Hang Timer</span>
+      </button>
+    </div>
+
+    <!-- Action Tools -->
+    <div class="flex items-center space-x-2">
+      <button onclick="toggleAudioBeep()" id="audio-toggle" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition" title="Toggle Countdown Beep Sound">
+        <i class="fa-solid fa-volume-high" id="audio-icon"></i>
+      </button>
+      <button onclick="toggleUrlModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5">
+        <i class="fa-solid fa-cloud-arrow-down text-indigo-400"></i>
+        <span>Fetch Tasks URL</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN DISPLAY AREA -->
+  <main class="flex-1 flex flex-col p-3 space-y-3 overflow-hidden">
+
+    <!-- DISPLAY SECTION (WEATHER + HUGE CLOCK / STOPWATCH) -->
+    <section class="h-64 bg-slate-900/60 rounded-2xl border border-slate-800/80 p-3 flex flex-col justify-between relative overflow-hidden backdrop-blur-md shadow-xl shrink-0">
+      
+      <!-- WEATHER WIDGET OVERLAY -->
+      <div class="absolute top-2.5 left-3 flex items-center space-x-3 bg-slate-950/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800/80 z-10">
+        <div id="weather-icon-container" class="text-xl text-amber-400 flex items-center justify-center">
+          <i class="fa-solid fa-sun animate-pulse"></i>
+        </div>
+        <div class="flex items-baseline space-x-2">
+          <span id="weather-temp" class="text-lg font-bold font-mono text-slate-100">--°F</span>
+          <span id="weather-range" class="text-[11px] font-mono text-slate-400">H: --° L: --°</span>
+        </div>
+        <span class="text-slate-700 text-xs">|</span>
+        <div class="flex items-center space-x-1">
+          <i class="fa-solid fa-location-dot text-[10px] text-indigo-400"></i>
+          <span id="weather-city" class="text-[11px] font-medium text-slate-300">Detecting...</span>
+        </div>
+      </div>
+
+      <!-- MODE A: GYM WALL CLOCK (HUGE DIGITS) -->
+      <div id="view-clock" class="h-full flex flex-col justify-center items-center pt-5">
+        <div class="flex items-baseline justify-center space-x-2 w-full">
+          <div id="clock-display" class="font-mono text-8xl md:text-[9rem] font-black tracking-tight text-gymRed digital-glow-red leading-none">
+            00:00:00
+          </div>
+          <span id="clock-ampm" class="font-mono text-2xl font-bold text-slate-400">AM</span>
+        </div>
+        <div class="mt-1 flex items-center space-x-4">
+          <span id="clock-date" class="text-slate-400 font-medium text-sm tracking-widest uppercase">Loading date...</span>
+          <button onclick="toggleTimeFormat()" id="format-btn" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700">
+            12H
+          </button>
+        </div>
+      </div>
+
+      <!-- MODE B: DEAD HANG STOPWATCH (HUGE DIGITS) -->
+      <div id="view-stopwatch" class="hidden h-full flex flex-col justify-between items-center pt-3 pb-1">
+        
+        <!-- Delay Banner Header -->
+        <div id="countdown-banner" class="h-6 opacity-0 transition-opacity duration-300 flex items-center justify-center space-x-2 bg-amber-500/20 text-amber-300 px-3 py-0.5 rounded-full border border-amber-500/40 text-[11px] font-bold uppercase tracking-wider">
+          <i class="fa-solid fa-hourglass-start animate-spin text-xs"></i>
+          <span id="countdown-text">GET READY: 5</span>
+        </div>
+
+        <!-- Stopwatch Digits -->
+        <div class="flex items-baseline justify-center font-mono tracking-tight my-auto">
+          <div id="stopwatch-display" class="text-8xl md:text-[8.5rem] font-black text-gymGreen digital-glow-green leading-none">
+            00:00.0
+          </div>
+          <span class="text-slate-500 font-semibold text-sm ml-2">HANG TIME</span>
+        </div>
+
+        <!-- Control Buttons -->
+        <div class="flex items-center space-x-3">
+          <!-- 5s Delayed Start -->
+          <button id="btn-delay-start" onclick="startWithDelay(5)" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-hourglass-half"></i>
+            <span>Start (5s Delay)</span>
+          </button>
+
+          <!-- Instant Start / Pause -->
+          <button id="btn-toggle-timer" onclick="toggleTimer()" class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition flex items-center space-x-2">
+            <i class="fa-solid fa-play" id="btn-play-icon"></i>
+            <span id="btn-play-text">Start Now</span>
+          </button>
+
+          <!-- Reset -->
+          <button onclick="resetTimer()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider border border-slate-700 transition flex items-center space-x-1">
+            <i class="fa-solid fa-rotate-left"></i>
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TO-DO LIST COLUMNS SECTION (WORK, FINTECH, PERSONAL) -->
+    <section class="flex-1 grid grid-cols-3 gap-3 overflow-hidden">
+      
+      <!-- Column 1: Work -->
+      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 flex flex-col overflow-hidden backdrop-blur-md">
+        <!-- Section Header -->
+        <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+            <h2 class="font-bold text-sm tracking-wide text-slate-200">Work</h2>
+          </div>
+          <span id="count-Work" class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0/0</span>
+        </div>
+        <!-- Task Items List -->
+        <div id="list-Work" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+        <!-- Add Item Input -->
+        <div class="p-2 border-t border-slate-800/80 bg-slate-950/40">
+          <form onsubmit="addTask(event, 'Work')" class="flex space-x-1.5">
+            <input type="text" id="input-Work" placeholder="+ Add Work task..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <button type="submit" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold">Add</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Column 2: FinTech -->
+      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 flex flex-col overflow-hidden backdrop-blur-md">
+        <!-- Section Header -->
+        <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <h2 class="font-bold text-sm tracking-wide text-slate-200">FinTech</h2>
+          </div>
+          <span id="count-FinTech" class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0/0</span>
+        </div>
+        <!-- Task Items List -->
+        <div id="list-FinTech" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+        <!-- Add Item Input -->
+        <div class="p-2 border-t border-slate-800/80 bg-slate-950/40">
+          <form onsubmit="addTask(event, 'FinTech')" class="flex space-x-1.5">
+            <input type="text" id="input-FinTech" placeholder="+ Add FinTech task..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <button type="submit" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold">Add</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Column 3: Personal -->
+      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 flex flex-col overflow-hidden backdrop-blur-md">
+        <!-- Section Header -->
+        <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+            <h2 class="font-bold text-sm tracking-wide text-slate-200">Personal</h2>
+          </div>
+          <span id="count-Personal" class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0/0</span>
+        </div>
+        <!-- Task Items List -->
+        <div id="list-Personal" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
+        <!-- Add Item Input -->
+        <div class="p-2 border-t border-slate-800/80 bg-slate-950/40">
+          <form onsubmit="addTask(event, 'Personal')" class="flex space-x-1.5">
+            <input type="text" id="input-Personal" placeholder="+ Add Personal task..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+            <button type="submit" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold">Add</button>
+          </form>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL: FETCH TASKS FROM EXTERNAL URL -->
+  <div id="url-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-base text-slate-100 flex items-center space-x-2">
+          <i class="fa-solid fa-cloud-arrow-down text-indigo-400"></i>
+          <span>Fetch Daily Tasks from URL</span>
+        </h3>
+        <button onclick="toggleUrlModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Enter a public URL serving JSON formatted tasks (e.g. GitHub Gist raw URL). Tasks will be loaded automatically into Work, FinTech, and Personal lists.
+      </p>
+
+      <div class="space-y-2">
+        <label class="text-xs font-semibold text-slate-300">JSON Endpoint URL</label>
+        <input type="url" id="json-url-input" placeholder="https://gist.githubusercontent.com/.../tasks.json" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
+      </div>
+
+      <!-- JSON Format Helper Code Block -->
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-[11px] font-mono text-slate-400 space-y-1">
+        <div class="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Expected JSON Structure:</div>
+        <pre class="text-slate-300">{
+  "Work": ["Deploy code", "Review PRs"],
+  "FinTech": ["Run backtest", "Sync feeds"],
+  "Personal": ["Dead hangs 3x60s", "Hydrate"]
+}</pre>
+      </div>
+
+      <div class="flex space-x-3 pt-2">
+        <button onclick="fetchTasksFromUrl()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-download"></i>
+          <span>Load Tasks</span>
+        </button>
+        <button onclick="loadSampleData()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition">
+          Reset Demo Data
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    // --- APP STATE ---
+    let currentMode = 'clock'; // 'clock' or 'stopwatch'
+    let is24HourFormat = false;
+    let audioEnabled = true;
+
+    // Weather State Defaults (Doral / Miami area default coordinates)
+    let userLat = 25.8195;
+    let userLon = -80.3553;
+    let userCityName = "Local Weather";
+
+    // Stopwatch State
+    let stopwatchInterval = null;
+    let stopwatchStartTime = 0;
+    let stopwatchElapsedTime = 0;
+    let isStopwatchRunning = false;
+    let delayCountdownInterval = null;
+    let delayRemaining = 0;
+
+    // Tasks State
+    let taskData = {
+      Work: [
+        { id: 1, text: "Review pull requests", completed: false },
+        { id: 2, text: "Deploy staging server build", completed: true },
+        { id: 3, text: "Prep system architecture specs", completed: false }
+      ],
+      FinTech: [
+        { id: 4, text: "Run daily algorithmic backtest", completed: false },
+        { id: 5, text: "Reconcile market feed latency", completed: true },
+        { id: 6, text: "Review portfolio allocation", completed: false }
+      ],
+      Personal: [
+        { id: 7, text: "Dead hangs: 3 sets x 60 seconds", completed: false },
+        { id: 8, text: "Mobility & shoulder stretches", completed: false },
+        { id: 9, text: "Hydrate 3L target", completed: true }
+      ]
+    };
+
+    // --- WEATHER MODULE (Open-Meteo API) ---
+    async function fetchWeather() {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current_weather=true&daily=temperature_2d_max,temperature_2d_min&temperature_unit=fahrenheit&timezone=auto`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("Weather API error");
+        const data = await res.json();
+
+        if (data && data.current_weather) {
+          const currentTemp = Math.round(data.current_weather.temperature);
+          const weatherCode = data.current_weather.weathercode;
+          const maxTemp = data.daily ? Math.round(data.daily.temperature_2d_max[0]) : '--';
+          const minTemp = data.daily ? Math.round(data.daily.temperature_2d_min[0]) : '--';
+
+          document.getElementById('weather-temp').textContent = `${currentTemp}°F`;
+          document.getElementById('weather-range').textContent = `H: ${maxTemp}° L: ${minTemp}°`;
+          document.getElementById('weather-city').textContent = userCityName;
+
+          // Set Icon based on WMO Weather Code
+          setWeatherIcon(weatherCode);
+        }
+      } catch (err) {
+        console.warn("Weather fetch failed, falling back to defaults", err);
+        document.getElementById('weather-city').textContent = "Weather Unavailable";
+      }
+    }
+
+    function setWeatherIcon(code) {
+      const iconContainer = document.getElementById('weather-icon-container');
+      let iconHtml = '<i class="fa-solid fa-sun text-amber-400"></i>'; // Default Clear
+
+      // WMO Code Map
+      if (code === 0) {
+        iconHtml = '<i class="fa-solid fa-sun text-amber-400"></i>';
+      } else if (code >= 1 && code <= 3) {
+        iconHtml = '<i class="fa-solid fa-cloud-sun text-amber-300"></i>';
+      } else if (code >= 45 && code <= 48) {
+        iconHtml = '<i class="fa-solid fa-smog text-slate-400"></i>';
+      } else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+        iconHtml = '<i class="fa-solid fa-cloud-showers-heavy text-sky-400"></i>';
+      } else if (code >= 71 && code <= 77) {
+        iconHtml = '<i class="fa-solid fa-snowflake text-indigo-300"></i>';
+      } else if (code >= 95) {
+        iconHtml = '<i class="fa-solid fa-cloud-bolt text-amber-500"></i>';
+      }
+
+      iconContainer.innerHTML = iconHtml;
+    }
+
+    function initGeolocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userLat = pos.coords.latitude;
+            userLon = pos.coords.longitude;
+            userCityName = "Current Location";
+            fetchWeather();
+          },
+          (err) => {
+            console.log("Geolocation declined or unavailable, using default coordinates.");
+            userCityName = "Local Area";
+            fetchWeather();
+          },
+          { timeout: 6000 }
+        );
+      } else {
+        fetchWeather();
+      }
+    }
+
+    // --- AUDIO SYNTHESIZER ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playBeep(freq = 600, duration = 0.1) {
+      if (!audioEnabled) return;
+      try {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.log("Audio play error:", e);
+      }
+    }
+
+    function toggleAudioBeep() {
+      audioEnabled = !audioEnabled;
+      const btn = document.getElementById('audio-toggle');
+      const icon = document.getElementById('audio-icon');
+      if (audioEnabled) {
+        btn.classList.replace('text-slate-500', 'text-slate-300');
+        icon.className = 'fa-solid fa-volume-high';
+      } else {
+        btn.classList.replace('text-slate-300', 'text-slate-500');
+        icon.className = 'fa-solid fa-volume-xmark';
+      }
+    }
+
+    // --- CLOCK MODULE ---
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      
+      let ampm = '';
+      if (!is24HourFormat) {
+        ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+      }
+      
+      const formattedHours = String(hours).padStart(2, '0');
+      document.getElementById('clock-display').textContent = `${formattedHours}:${minutes}:${seconds}`;
+      document.getElementById('clock-ampm').textContent = is24HourFormat ? '' : ampm;
+
+      // Date Display
+      const options = { weekday: 'short', month: 'short', day: 'numeric' };
+      document.getElementById('clock-date').textContent = now.toLocaleDateString('en-US', options);
+    }
+
+    function toggleTimeFormat() {
+      is24HourFormat = !is24HourFormat;
+      document.getElementById('format-btn').textContent = is24HourFormat ? '24H' : '12H';
+      updateClock();
+    }
+
+    // --- STOPWATCH MODULE ---
+    function formatStopwatchTime(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      const tenths = Math.floor((ms % 1000) / 100);
+
+      const mStr = String(minutes).padStart(2, '0');
+      const sStr = String(seconds).padStart(2, '0');
+      return `${mStr}:${sStr}.${tenths}`;
+    }
+
+    function updateStopwatchDisplay() {
+      document.getElementById('stopwatch-display').textContent = formatStopwatchTime(stopwatchElapsedTime);
+    }
+
+    function startTimer() {
+      if (isStopwatchRunning) return;
+      isStopwatchRunning = true;
+      stopwatchStartTime = Date.now() - stopwatchElapsedTime;
+      
+      stopwatchInterval = setInterval(() => {
+        stopwatchElapsedTime = Date.now() - stopwatchStartTime;
+        updateStopwatchDisplay();
+      }, 50);
+
+      document.getElementById('btn-play-icon').className = 'fa-solid fa-pause';
+      document.getElementById('btn-play-text').textContent = 'Pause';
+      document.getElementById('btn-toggle-timer').className = 'px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-600/20 transition flex items-center space-x-2';
+    }
+
+    function pauseTimer() {
+      if (!isStopwatchRunning) return;
+      isStopwatchRunning = false;
+      clearInterval(stopwatchInterval);
+
+      document.getElementById('btn-play-icon').className = 'fa-solid fa-play';
+      document.getElementById('btn-play-text').textContent = 'Resume';
+      document.getElementById('btn-toggle-timer').className = 'px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition flex items-center space-x-2';
+    }
+
+    function toggleTimer() {
+      cancelDelayCountdown();
+      if (isStopwatchRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function resetTimer() {
+      cancelDelayCountdown();
+      pauseTimer();
+      stopwatchElapsedTime = 0;
+      updateStopwatchDisplay();
+      document.getElementById('btn-play-text').textContent = 'Start Now';
+    }
+
+    function startWithDelay(seconds = 5) {
+      cancelDelayCountdown();
+      pauseTimer();
+      stopwatchElapsedTime = 0;
+      updateStopwatchDisplay();
+
+      delayRemaining = seconds;
+      const banner = document.getElementById('countdown-banner');
+      const bannerText = document.getElementById('countdown-text');
+      
+      banner.classList.remove('opacity-0');
+      bannerText.textContent = `GET READY: ${delayRemaining}`;
+      playBeep(440, 0.15);
+
+      delayCountdownInterval = setInterval(() => {
+        delayRemaining--;
+        if (delayRemaining > 0) {
+          bannerText.textContent = `GET READY: ${delayRemaining}`;
+          playBeep(440, 0.15);
+        } else {
+          cancelDelayCountdown();
+          bannerText.textContent = `GO!`;
+          playBeep(880, 0.4);
+          setTimeout(() => banner.classList.add('opacity-0'), 1200);
+          startTimer();
+        }
+      }, 1000);
+    }
+
+    function cancelDelayCountdown() {
+      if (delayCountdownInterval) {
+        clearInterval(delayCountdownInterval);
+        delayCountdownInterval = null;
+      }
+      document.getElementById('countdown-banner').classList.add('opacity-0');
+    }
+
+    // --- MODE SWITCHER ---
+    function switchMode(mode) {
+      currentMode = mode;
+      const clockTab = document.getElementById('tab-clock');
+      const stopwatchTab = document.getElementById('tab-stopwatch');
+      const clockView = document.getElementById('view-clock');
+      const stopwatchView = document.getElementById('view-stopwatch');
+
+      if (mode === 'clock') {
+        clockTab.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-md";
+        stopwatchTab.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200";
+        clockView.classList.remove('hidden');
+        stopwatchView.classList.add('hidden');
+      } else {
+        stopwatchTab.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-md";
+        clockTab.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200";
+        stopwatchView.classList.remove('hidden');
+        clockView.classList.add('hidden');
+      }
+    }
+
+    // --- TO-DO LIST MODULE ---
+    function renderTasks() {
+      const categories = ['Work', 'FinTech', 'Personal'];
+
+      categories.forEach(cat => {
+        const listEl = document.getElementById(`list-${cat}`);
+        const countEl = document.getElementById(`count-${cat}`);
+        const tasks = taskData[cat] || [];
+        
+        const completedCount = tasks.filter(t => t.completed).length;
+        if (countEl) countEl.textContent = `${completedCount}/${tasks.length}`;
+
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        
+        if (tasks.length === 0) {
+          listEl.innerHTML = `<div class="text-xs text-slate-600 italic text-center py-6">No tasks added</div>`;
+          return;
+        }
+
+        tasks.forEach(task => {
+          const itemEl = document.createElement('div');
+          itemEl.className = `group flex items-center justify-between p-2.5 rounded-xl border transition-all ${
+            task.completed 
+              ? 'bg-slate-950/40 border-slate-900 text-slate-500' 
+              : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'
+          }`;
+
+          itemEl.innerHTML = `
+            <label class="flex items-center space-x-3 flex-1 cursor-pointer overflow-hidden pr-2">
+              <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${cat}', ${task.id})" class="w-4 h-4 rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer">
+              <span class="text-xs font-medium truncate ${task.completed ? 'line-through text-slate-500' : ''}">${escapeHtml(task.text)}</span>
+            </label>
+            <button onclick="deleteTask('${cat}', ${task.id})" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-1 transition" title="Delete Task">
+              <i class="fa-regular fa-trash-can text-xs"></i>
+            </button>
+          `;
+          listEl.appendChild(itemEl);
+        });
+      });
+
+      saveLocalTasks();
+    }
+
+    function toggleTask(category, id) {
+      taskData[category] = taskData[category].map(t => {
+        if (t.id === id) return { ...t, completed: !t.completed };
+        return t;
+      });
+      renderTasks();
+    }
+
+    function addTask(event, category) {
+      event.preventDefault();
+      const input = document.getElementById(`input-${category}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      if (!taskData[category]) taskData[category] = [];
+      taskData[category].push({
+        id: Date.now(),
+        text: text,
+        completed: false
+      });
+
+      input.value = '';
+      renderTasks();
+    }
+
+    function deleteTask(category, id) {
+      taskData[category] = taskData[category].filter(t => t.id !== id);
+      renderTasks();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // --- LOCAL STORAGE PERSISTENCE ---
+    function saveLocalTasks() {
+      try {
+        localStorage.setItem('ipad_dashboard_tasks', JSON.stringify(taskData));
+      } catch (e) {
+        console.error("Local Storage save error", e);
+      }
+    }
+
+    function loadLocalTasks() {
+      try {
+        const saved = localStorage.getItem('ipad_dashboard_tasks');
+        if (saved) {
+          taskData = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error("Local Storage load error", e);
+      }
+    }
+
+    // --- FETCH TASKS VIA URL ---
+    function toggleUrlModal() {
+      const modal = document.getElementById('url-modal');
+      const isVisible = !modal.classList.contains('opacity-0');
+      if (isVisible) {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+      } else {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+      }
+    }
+
+    async function fetchTasksFromUrl() {
+      const urlInput = document.getElementById('json-url-input').value.trim();
+      if (!urlInput) return;
+
+      try {
+        const res = await fetch(urlInput);
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        const data = await res.json();
+
+        const newTasks = { Work: [], FinTech: [], Personal: [] };
+        
+        ['Work', 'FinTech', 'Personal'].forEach(cat => {
+          if (Array.isArray(data[cat])) {
+            newTasks[cat] = data[cat].map((item, idx) => {
+              if (typeof item === 'string') {
+                return { id: Date.now() + idx, text: item, completed: false };
+              }
+              return { id: item.id || Date.now() + idx, text: item.text || String(item), completed: !!item.completed };
+            });
+          }
+        });
+
+        taskData = newTasks;
+        renderTasks();
+        toggleUrlModal();
+      } catch (err) {
+        alert("Failed to fetch JSON tasks. Please verify URL CORS settings and JSON format.");
+        console.error(err);
+      }
+    }
+
+    function loadSampleData() {
+      taskData = {
+        Work: [
+          { id: 1, text: "Review pull requests", completed: false },
+          { id: 2, text: "Deploy staging server build", completed: true },
+          { id: 3, text: "Prep system architecture specs", completed: false }
+        ],
+        FinTech: [
+          { id: 4, text: "Run daily algorithmic backtest", completed: false },
+          { id: 5, text: "Reconcile market feed latency", completed: true },
+          { id: 6, text: "Review portfolio allocation", completed: false }
+        ],
+        Personal: [
+          { id: 7, text: "Dead hangs: 3 sets x 60 seconds", completed: false },
+          { id: 8, text: "Mobility & shoulder stretches", completed: false },
+          { id: 9, text: "Hydrate 3L target", completed: true }
+        ]
+      };
+      renderTasks();
+      toggleUrlModal();
+    }
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      // 1. Clock loop
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // 2. Weather init + 15 min refresh interval
+      initGeolocation();
+      setInterval(fetchWeather, 15 * 60 * 1000);
+
+      // 3. Load tasks
+      loadLocalTasks();
+      renderTasks();
+
+      // 4. iOS AudioContext unlock
+      document.body.addEventListener('touchstart', function() {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      }, { once: true });
+    };
+  </script>
+</body>
+</html>
