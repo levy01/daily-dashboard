@@ -41,7 +41,8 @@ var DEFAULTS = [
   ['pomodoro_min', '25'],                 // timer presets, minutes
   ['short_min', '5'],
   ['long_min', '15'],
-  ['news_topics', 'finance,health,sports,business,education']   // comma separated, up to 6
+  ['news_topics', 'finance,health,sports,business,education'],  // comma separated, up to 6
+  ['language', 'en']                      // en or es
 ];
 
 var ID_RE = /^[a-z0-9]{6,24}$/;
@@ -53,12 +54,46 @@ var MAX_SECTION = 30;
 // ---------------------------------------------------------------- menu + setup
 
 function onOpen() {
+  var es = es_();
   SpreadsheetApp.getUi().createMenu('Dashboard')
-    .addItem('Set up / repair this sheet', 'setup')
-    .addItem('Show connection info', 'showInfo')
-    .addItem('Rotate secret key', 'rotateKey')
-    .addItem('Test news feed', 'testNewsMenu')
+    .addItem(es ? 'Configurar / reparar esta hoja' : 'Set up / repair this sheet', 'setup')
+    .addItem(es ? 'Mostrar datos de conexión' : 'Show connection info', 'showInfo')
+    .addItem(es ? 'Cambiar la clave secreta' : 'Rotate secret key', 'rotateKey')
+    .addItem(es ? 'Probar noticias' : 'Test news feed', 'testNewsMenu')
+    .addSeparator()
+    .addItem('Usar español', 'setSpanish')
+    .addItem('Use English', 'setEnglish')
     .addToUi();
+}
+
+// Language: 'en' or 'es'. Controls the dashboard text, the news edition and this menu.
+function es_() {
+  try { return readSettings_(ss_()).language === 'es'; } catch (e) { return false; }
+}
+var ES_NEWS_TOPICS = 'finanzas,salud,deportes,negocios,educación';
+var EN_NEWS_TOPICS = 'finance,health,sports,business,education';
+
+function setSpanish() {
+  setup();
+  writeSetting_('language', 'es');
+  var cur = readSettings_(ss_());
+  if (cur.news_topics.join(',') === EN_NEWS_TOPICS) writeSetting_('news_topics', ES_NEWS_TOPICS);
+  var tasks = ss_().getSheetByName(TAB_TASKS);
+  if (tasks && tasks.getLastRow() < 2 && cur.sections.join(',') === 'Work,FinTech,Personal') writeSetting_('sections', 'Trabajo,Personal,Compras');
+  onOpen();
+  SpreadsheetApp.getUi().alert('Español activado',
+    'El panel, las noticias y este menú ahora están en español. Los dispositivos se actualizan en menos de un minuto.\n\n' +
+    'Puedes cambiar los nombres de las secciones con el lápiz del panel, o en la pestaña Settings.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
+function setEnglish() {
+  setup();
+  writeSetting_('language', 'en');
+  var cur = readSettings_(ss_());
+  if (cur.news_topics.join(',') === ES_NEWS_TOPICS) writeSetting_('news_topics', EN_NEWS_TOPICS);
+  onOpen();
+  SpreadsheetApp.getUi().alert('English enabled',
+    'The dashboard, news and this menu are now in English. Devices update within a minute.', SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function setup() {
@@ -94,30 +129,43 @@ function showInfo() {
   var ui = SpreadsheetApp.getUi();
   var props = PropertiesService.getScriptProperties();
   var saved = props.getProperty('API_URL') || '';
-  var r = ui.prompt('Dashboard connection',
-    'Paste your Web app URL (Deploy > Manage deployments > Web app URL, ends in /exec).' +
-    (saved ? '\n\nLeave blank to keep:\n' + saved : '\n\nNot deployed yet? Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone) first.'),
+  var es = es_();
+  var r = ui.prompt(es ? 'Conexión del panel' : 'Dashboard connection',
+    es ? 'Pega la URL de la aplicación web (Implementar > Administrar implementaciones > URL de la aplicación web, termina en /exec).' +
+         (saved ? '\n\nDeja en blanco para conservar:\n' + saved : '\n\n¿Aún no la has publicado? Primero: Implementar > Nueva implementación > Aplicación web (Ejecutar como: Yo, Quién tiene acceso: Cualquier persona).')
+       : 'Paste your Web app URL (Deploy > Manage deployments > Web app URL, ends in /exec).' +
+         (saved ? '\n\nLeave blank to keep:\n' + saved : '\n\nNot deployed yet? Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone) first.'),
     ui.ButtonSet.OK_CANCEL);
   if (r.getSelectedButton() !== ui.Button.OK) return;
   var url = r.getResponseText().trim() || saved;
   if (!/^https:\/\/script\.google\.com\/(macros\/s\/[A-Za-z0-9_-]+|a\/[^\/]+\/macros\/s\/[A-Za-z0-9_-]+)\/exec$/.test(url)) {
-    ui.alert('That does not look like a Web app URL',
-      'It should start with https://script.google.com/macros/s/ and end with /exec.', ui.ButtonSet.OK);
+    ui.alert(es ? 'Eso no parece una URL de aplicación web' : 'That does not look like a Web app URL',
+      es ? 'Debe empezar con https://script.google.com/macros/s/ y terminar en /exec.'
+         : 'It should start with https://script.google.com/macros/s/ and end with /exec.', ui.ButtonSet.OK);
     return;
   }
   props.setProperty('API_URL', url);
-  var link = DASHBOARD_URL + '#api=' + encodeURIComponent(url) + '&key=' + encodeURIComponent(key);
+  var link = DASHBOARD_URL + '#api=' + encodeURIComponent(url) + '&key=' + encodeURIComponent(key) + '&lang=' + (es ? 'es' : 'en');
+  var body = es
+    ? '<p><b>Abre este enlace en cada dispositivo que quieras conectar</b> (iPad, computadora, teléfono). ' +
+      'Conecta el dispositivo automáticamente. Mantenlo privado: quien lo tenga puede ver y cambiar tus tareas.</p>' +
+      '<p><a href="' + esc_(link) + '" target="_blank" style="font-size:16px">Abrir el panel y conectar este dispositivo</a></p>' +
+      '<p>Para conectar otro dispositivo, copia el enlace:</p>'
+    : '<p><b>Open this link on each device you want to connect</b> (iPad, laptop, phone). ' +
+      'It pairs the device automatically. Keep it private: anyone with it can see and change your tasks.</p>' +
+      '<p><a href="' + esc_(link) + '" target="_blank" style="font-size:16px">Open dashboard and pair this device</a></p>' +
+      '<p>To pair another device, copy the link:</p>';
+  var tail = es
+    ? 'App en la pantalla de inicio del iPad: el icono tiene su propio almacenamiento. Abre primero el enlace en Safari, luego agrégalo a la pantalla de inicio, ' +
+      'y pega la URL y la clave con el engranaje (Clave: ' + esc_(key) + ').'
+    : 'iPad Home Screen app: a Home Screen icon has its own storage, so open the link in Safari first, ' +
+      'then add to Home Screen, then paste the URL and key under the gear icon (Key: ' + esc_(key) + ').';
   var html = HtmlService.createHtmlOutput(
-    '<div style="font:14px Arial,sans-serif;line-height:1.5">' +
-    '<p><b>Open this link on each device you want to connect</b> (iPad, laptop, phone). ' +
-    'It pairs the device automatically. Keep it private: anyone with it can see and change your tasks.</p>' +
-    '<p><a href="' + esc_(link) + '" target="_blank" style="font-size:16px">Open dashboard and pair this device</a></p>' +
-    '<p>To pair another device, copy the link:</p>' +
+    '<div style="font:14px Arial,sans-serif;line-height:1.5">' + body +
     '<textarea readonly onclick="this.select()" style="width:100%;height:110px;font:12px monospace">' + esc_(link) + '</textarea>' +
-    '<p style="color:#666;font-size:12px">iPad Home Screen app: a Home Screen icon has its own storage, so open the link in Safari first, ' +
-    'then add to Home Screen, then paste the URL and key under the gear icon (Key: ' + esc_(key) + ').</p>' +
+    '<p style="color:#666;font-size:12px">' + tail + '</p>' +
     '</div>').setWidth(560).setHeight(420);
-  ui.showModalDialog(html, 'Dashboard connection');
+  ui.showModalDialog(html, es ? 'Conexión del panel' : 'Dashboard connection');
 }
 
 function esc_(s) {
@@ -293,10 +341,10 @@ function newsOut_() {
   var settings = readSettings_(ss_());
   var cache = CacheService.getScriptCache();
   var topics = settings.news_topics.map(function (topic) {
-    var ck = 'news_' + topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 60);
+    var ck = 'news_' + settings.language + '_' + topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 60);
     var hit = cache.get(ck);
     if (hit) { try { return JSON.parse(hit); } catch (e) { /* refetch */ } }
-    var f = fetchNews_(topic);
+    var f = fetchNews_(topic, settings.language);
     var res = { topic: topic, items: f.items };
     if (f.err) { res.err = f.err; return res; }          // never cache failures
     if (res.items.length) { try { cache.put(ck, JSON.stringify(res), 1800); } catch (e) { /* too big: skip cache */ } }
@@ -305,9 +353,10 @@ function newsOut_() {
   return { ok: true, topics: topics };
 }
 
-function fetchNews_(topic) {
+function fetchNews_(topic, lang) {
   try {
-    var url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(topic + ' when:2d') + '&hl=en-US&gl=US&ceid=US:en';
+    var edition = lang === 'es' ? '&hl=es-419&gl=US&ceid=US:es-419' : '&hl=en-US&gl=US&ceid=US:en';
+    var url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(topic + ' when:2d') + edition;
     var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
     if (resp.getResponseCode() !== 200) return { items: [], err: 'HTTP ' + resp.getResponseCode() };
     var channel = XmlService.parse(resp.getContentText()).getRootElement().getChild('channel');
@@ -325,14 +374,15 @@ function fetchNews_(topic) {
 
 // Run once from the editor (or Dashboard > Test news feed) to grant the "connect to external service" permission.
 function testNews() {                       // run from the editor: result goes to the Execution log, no dialog
-  var r = fetchNews_('finance');
+  var es = es_();
+  var r = fetchNews_(es ? 'finanzas' : 'finance', es ? 'es' : 'en');
   var msg = r.err ? 'FAILED: ' + r.err : 'OK: ' + r.items.length + ' stories. First: ' + (r.items[0] ? r.items[0].title : '-');
   Logger.log(msg);
   return msg;
 }
 
 function testNewsMenu() {                   // Dashboard menu: shows the result in a dialog
-  SpreadsheetApp.getUi().alert('News feed test', testNews(), SpreadsheetApp.getUi().ButtonSet.OK);
+  SpreadsheetApp.getUi().alert(es_() ? 'Prueba de noticias' : 'News feed test', testNews(), SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 // Fill in anything missing on rows typed by hand in the sheet (ID, Section, Day) and fix duplicate IDs.
@@ -429,6 +479,7 @@ function readSettings_(ss) {
     dim_start: kv.dim_start,
     dim_end: kv.dim_end,
     reload_at: kv.reload_at,
+    language: /^es/i.test(String(kv.language || '')) ? 'es' : 'en',
     pomodoro_min: num_(kv.pomodoro_min, 25, 1, 180),
     short_min: num_(kv.short_min, 5, 1, 180),
     long_min: num_(kv.long_min, 15, 1, 180),

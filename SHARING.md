@@ -34,6 +34,13 @@ must paste the new `Code.gs` into their own copy and redeploy a new version to g
 5. Optional: **Dashboard > Test news feed** and approve the extra permission so the news popup works.
 6. Rename sections with the pencil icon, set weather coordinates, clock colour and news topics on the **Settings** tab.
 
+## Spanish-speaking users
+The dashboard, the news, and the Sheet menu all have a Spanish mode. After their copy is set up, the person runs
+**Dashboard > Usar español** (there is also **Use English**). That sets `language` on the Settings tab, switches the news to
+Google News in Spanish with Spanish topics, and, if there are no tasks yet, renames the default sections to
+Trabajo / Personal / Compras. The pairing link carries the language, so the dashboard is Spanish from the first screen.
+Send them `CONFIGURACION-ES.md`, a Spanish version of the steps above.
+
 ## Good to know
 - Each person's Google account runs their own script, so quota limits are per person and far above normal use.
 - Anyone holding a person's pairing link can read and change that person's tasks. **Dashboard > Rotate secret key**
