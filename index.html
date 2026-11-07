@@ -2,863 +2,107 @@
 <html lang="en" class="h-full bg-slate-950 text-slate-100">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>iPad Gym & Work Dashboard</title>
-
-  <!-- iOS Standalone Web App / Fullscreen Meta Tags -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Dashboard">
-  
+  <meta name="apple-mobile-web-app-title" content="Gym Dashboard">
+  <title>Gym & Work Dashboard</title>
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- FontAwesome for clean icons -->
+  <!-- FontAwesome Icons CDN -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Google Fonts: Inter & JetBrains Mono for Gym Clock visual accuracy -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
-  
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            gymRed: '#ff2a2a',
-            gymGreen: '#10b981',
-            gymAmber: '#f59e0b',
-          }
-        }
-      }
-    }
-  </script>
-  
+
   <style>
-    /* Digital clock LED glow effect */
-    .digital-glow-red {
-      text-shadow: 0 0 25px rgba(255, 42, 42, 0.45), 0 0 50px rgba(255, 42, 42, 0.25);
+    @font-face {
+      font-family: 'Digital';
+      src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2') format('woff2');
     }
-    .digital-glow-green {
-      text-shadow: 0 0 25px rgba(16, 185, 129, 0.45), 0 0 50px rgba(16, 185, 129, 0.25);
+    .digital-font {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      letter-spacing: -0.02em;
     }
-    /* Custom scrollbar styling for iPad layout */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.6);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(51, 65, 85, 0.8);
-      border-radius: 4px;
+    /* Prevent selection on tap/hold for iOS kiosk buttons */
+    .no-select {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
   </style>
 </head>
-<body class="h-full w-full overflow-hidden flex flex-col justify-between font-sans bg-slate-950 text-slate-100 select-none">
+<body class="h-full flex flex-col justify-between overflow-hidden bg-slate-950 font-sans antialiased no-select">
 
-  <!-- TOP BAR & MODE SWITCHER -->
-  <header class="h-14 px-5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between shrink-0">
+  <!-- Top Header / Navigation Bar -->
+  <header class="flex items-center justify-between px-6 py-3 border-b border-slate-800 bg-slate-900/40">
+    
+    <!-- Mode Selector: Sliding Switch Button -->
     <div class="flex items-center space-x-3">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
-        <i class="fa-solid font-bold text-base fa-bullseye"></i>
-      </div>
-      <div>
-        <h1 class="font-bold text-sm tracking-wide text-slate-100 leading-tight">Kiosk Dashboard</h1>
-        <p class="text-[10px] text-slate-400 font-medium leading-none">iPad Mini 4 • Gym & Work</p>
+      <div class="relative bg-slate-900 border border-slate-800 p-1 rounded-xl flex items-center w-80 h-11 cursor-pointer select-none" onclick="toggleModeFromSwitch(event)">
+        <!-- Sliding Indicator Background -->
+        <div id="switchPill" class="absolute top-1 bottom-1 w-[calc(50%-4px)] bg-amber-500/20 border border-amber-500/40 rounded-lg transition-all duration-300 ease-in-out left-1"></div>
+
+        <!-- Mode Option 1: Gym Wall Clock -->
+        <div id="modeOptClock" class="relative z-10 w-1/2 text-center text-xs font-bold uppercase tracking-wider text-amber-400 transition-colors"
+             onmousedown="handlePressStart('clock')" onmouseup="handlePressEnd()" onmouseleave="handlePressEnd()"
+             ontouchstart="handlePressStart('clock')" ontouchend="handlePressEnd()" ondblclick="promptRenameLabel('clock')">
+          <span id="labelClock">Gym Wall Clock</span>
+        </div>
+
+        <!-- Mode Option 2: Dead Hang Timer -->
+        <div id="modeOptTimer" class="relative z-10 w-1/2 text-center text-xs font-bold uppercase tracking-wider text-slate-400 transition-colors"
+             onmousedown="handlePressStart('timer')" onmouseup="handlePressEnd()" onmouseleave="handlePressEnd()"
+             ontouchstart="handlePressStart('timer')" ontouchend="handlePressEnd()" ondblclick="promptRenameLabel('timer')">
+          <span id="labelTimer">Dead Hang Timer</span>
+        </div>
       </div>
     </div>
 
-    <!-- Sliding Mode Switcher -->
-    <div class="relative bg-slate-950 p-1 rounded-xl border border-slate-800/80 flex items-center w-72 h-10 select-none">
-      <!-- Sliding Active Indicator Background -->
-      <div id="switch-indicator" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-indigo-600 rounded-lg shadow-md transition-all duration-300 ease-in-out"></div>
+    <!-- Right Header Controls: Local Weather & Gist Task Fetch Drawer -->
+    <div class="flex items-center space-x-4">
       
-      <!-- Option 1: Clock -->
-      <button id="btn-mode-clock" 
-              onclick="handleModeTap('clock')" 
-              onmousedown="startPressTimer('clock')" 
-              onmouseup="cancelPressTimer()" 
-              onmouseleave="cancelPressTimer()"
-              ontouchstart="startPressTimer('clock')" 
-              ontouchend="cancelPressTimer()" 
-              ondblclick="promptRename('clock')"
-              class="relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-white">
-        <i class="fa-regular fa-clock text-xs"></i>
-        <span id="label-clock" class="truncate max-w-[90px]">Gym Wall Clock</span>
+      <!-- Local Weather Badge -->
+      <div id="weatherBadge" class="flex items-center space-x-3 bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-2 text-xs font-medium">
+        <i id="weatherIcon" class="fa-solid fa-sun text-amber-400 text-lg animate-pulse"></i>
+        <div class="flex items-center space-x-2">
+          <span id="weatherTemp" class="text-slate-100 font-bold text-sm">--°F</span>
+          <span id="weatherRange" class="text-slate-400 text-[11px]">H: --° L: --°</span>
+        </div>
+        <span class="text-slate-700">|</span>
+        <span id="weatherCity" class="text-slate-400 font-normal truncate max-w-[120px]"><i class="fa-solid fa-location-dot text-[10px] mr-1 text-slate-500"></i>Detecting...</span>
+      </div>
+
+      <!-- Sync / Reload Gist Tasks Button -->
+      <button onclick="loadTasksFromUrl(true)" title="Sync Tasks from Gist" class="bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-amber-400 w-10 h-10 rounded-xl flex items-center justify-center transition">
+        <i id="syncIcon" class="fa-solid fa-arrows-rotate text-sm"></i>
       </button>
 
-      <!-- Option 2: Stopwatch -->
-      <button id="btn-mode-stopwatch" 
-              onclick="handleModeTap('stopwatch')" 
-              onmousedown="startPressTimer('stopwatch')" 
-              onmouseup="cancelPressTimer()" 
-              onmouseleave="cancelPressTimer()"
-              ontouchstart="startPressTimer('stopwatch')" 
-              ontouchend="cancelPressTimer()" 
-              ondblclick="promptRename('stopwatch')"
-              class="relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-slate-400">
-        <i class="fa-solid fa-stopwatch text-xs"></i>
-        <span id="label-stopwatch" class="truncate max-w-[90px]">Dead Hang Timer</span>
-      </button>
-    </div>
-
-    <!-- Action Tools -->
-    <div class="flex items-center space-x-2">
-      <button onclick="fetchTasksFromUrl(true)" id="sync-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition" title="Sync Tasks Now">
-        <i class="fa-solid fa-rotate" id="sync-icon"></i>
-      </button>
-      <button onclick="toggleAudioBeep()" id="audio-toggle" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition" title="Toggle Countdown Beep Sound">
-        <i class="fa-solid fa-volume-high" id="audio-icon"></i>
-      </button>
-      <button onclick="toggleUrlModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5">
-        <i class="fa-solid fa-cloud-arrow-down text-indigo-400"></i>
-        <span>Fetch Tasks URL</span>
+      <!-- Task Sync Configuration Button -->
+      <button onclick="openTaskModal()" title="Task Sync Settings" class="bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-amber-400 w-10 h-10 rounded-xl flex items-center justify-center transition">
+        <i class="fa-solid fa-gear text-sm"></i>
       </button>
     </div>
   </header>
 
-  <!-- MAIN DISPLAY AREA -->
-  <main class="flex-1 flex flex-col p-3 space-y-3 overflow-hidden">
+  <!-- Main Content Layout Split: Hero Clock/Timer Top + 3 Column Tasks Bottom -->
+  <main class="flex-1 flex flex-col justify-between p-6 space-y-4">
 
-    <!-- DISPLAY SECTION (WEATHER + HUGE CLOCK / STOPWATCH) -->
-    <section class="h-64 bg-slate-900/60 rounded-2xl border border-slate-800/80 p-3 flex flex-col justify-between relative overflow-hidden backdrop-blur-md shadow-xl shrink-0">
+    <!-- Top Half: Enormous Display for Clock/Timer -->
+    <section class="bg-slate-900/40 rounded-2xl border border-slate-800/80 p-6 flex flex-col items-center justify-center relative shadow-2xl min-h-[220px]">
       
-      <!-- WEATHER WIDGET OVERLAY -->
-      <div class="absolute top-2.5 left-3 flex items-center space-x-3 bg-slate-950/70 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800/80 z-10">
-        <div id="weather-icon-container" class="text-xl text-amber-400 flex items-center justify-center">
-          <i class="fa-solid fa-sun animate-pulse"></i>
+      <!-- MODE 1: GYM WALL CLOCK DISPLAY -->
+      <div id="clockDisplaySection" class="flex flex-col items-center justify-center space-y-1">
+        <div id="clockDigits" class="digital-font text-7xl sm:text-8xl md:text-9xl font-black text-slate-100 tracking-tight leading-none drop-shadow-[0_0_25px_rgba(245,158,11,0.15)] cursor-pointer" onclick="toggleTimeFormat()" title="Click to toggle 12H / 24H">
+          00:00:00
         </div>
-        <div class="flex items-baseline space-x-2">
-          <span id="weather-temp" class="text-lg font-bold font-mono text-slate-100">--°F</span>
-          <span id="weather-range" class="text-[11px] font-mono text-slate-400">H: --° L: --°</span>
-        </div>
-        <span class="text-slate-700 text-xs">|</span>
-        <div class="flex items-center space-x-1">
-          <i class="fa-solid fa-location-dot text-[10px] text-indigo-400"></i>
-          <span id="weather-city" class="text-[11px] font-medium text-slate-300">Detecting...</span>
+        <div class="flex items-center space-x-3 text-slate-400 text-xs font-semibold uppercase tracking-widest pt-2">
+          <span id="clockAmPm" class="text-amber-400 font-bold">--</span>
+          <span>•</span>
+          <span id="clockDate">--- --, ----</span>
         </div>
       </div>
 
-      <!-- MODE A: GYM WALL CLOCK (HUGE DIGITS) -->
-      <div id="view-clock" class="h-full flex flex-col justify-center items-center pt-5">
-        <div class="flex items-baseline justify-center space-x-2 w-full">
-          <div id="clock-display" class="font-mono text-8xl md:text-[9rem] font-black tracking-tight text-gymRed digital-glow-red leading-none">
-            00:00:00
-          </div>
-          <span id="clock-ampm" class="font-mono text-2xl font-bold text-slate-400">AM</span>
-        </div>
-        <div class="mt-1 flex items-center space-x-4">
-          <span id="clock-date" class="text-slate-400 font-medium text-sm tracking-widest uppercase">Loading date...</span>
-          <button onclick="toggleTimeFormat()" id="format-btn" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700">
-            12H
-          </button>
-        </div>
-      </div>
-
-      <!-- MODE B: DEAD HANG STOPWATCH (HUGE DIGITS) -->
-      <div id="view-stopwatch" class="hidden h-full flex flex-col justify-between items-center pt-3 pb-1">
+      <!-- MODE 2: DEAD HANG STOPWATCH DISPLAY -->
+      <div id="timerDisplaySection" class="hidden flex-col items-center justify-center space-y-4 w-full">
         
-        <!-- Delay Banner Header -->
-        <div id="countdown-banner" class="h-6 opacity-0 transition-opacity duration-300 flex items-center justify-center space-x-2 bg-amber-500/20 text-amber-300 px-3 py-0.5 rounded-full border border-amber-500/40 text-[11px] font-bold uppercase tracking-wider">
-          <i class="fa-solid fa-hourglass-start animate-spin text-xs"></i>
-          <span id="countdown-text">GET READY: 5</span>
-        </div>
-
-        <!-- Stopwatch Digits -->
-        <div class="flex items-baseline justify-center font-mono tracking-tight my-auto">
-          <div id="stopwatch-display" class="text-8xl md:text-[8.5rem] font-black text-gymGreen digital-glow-green leading-none">
-            00:00.0
-          </div>
-          <span class="text-slate-500 font-semibold text-sm ml-2">HANG TIME</span>
-        </div>
-
-        <!-- Control Buttons -->
-        <div class="flex items-center space-x-3">
-          <!-- 5s Delayed Start -->
-          <button id="btn-delay-start" onclick="startWithDelay(5)" class="px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 transition flex items-center space-x-2">
-            <i class="fa-solid fa-hourglass-half"></i>
-            <span>Start (5s Delay)</span>
-          </button>
-
-          <!-- Instant Start / Pause -->
-          <button id="btn-toggle-timer" onclick="toggleTimer()" class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition flex items-center space-x-2">
-            <i class="fa-solid fa-play" id="btn-play-icon"></i>
-            <span id="btn-play-text">Start Now</span>
-          </button>
-
-          <!-- Reset -->
-          <button onclick="resetTimer()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider border border-slate-700 transition flex items-center space-x-1">
-            <i class="fa-solid fa-rotate-left"></i>
-            <span>Reset</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- TO-DO LIST COLUMNS SECTION (WORK, FINTECH, PERSONAL) -->
-    <section class="flex-1 grid grid-cols-3 gap-3 overflow-hidden">
-      
-      <!-- Column 1: Work -->
-      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 flex flex-col overflow-hidden backdrop-blur-md">
-        <!-- Section Header -->
-        <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-            <h2 class="font-bold text-sm tracking-wide text-slate-200">Work</h2>
-          </div>
-          <span id="count-Work" class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0/0</span>
-        </div>
-        <!-- Task Items List -->
-        <div id="list-Work" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
-        <!-- Add Item Input -->
-        <div class="p-2 border-t border-slate-800/80 bg-slate-950/40">
-          <form onsubmit="addTask(event, 'Work')" class="flex space-x-1.5">
-            <input type="text" id="input-Work" placeholder="+ Add Work task..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-            <button type="submit" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold">Add</button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Column 2: FinTech -->
-      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 flex flex-col overflow-hidden backdrop-blur-md">
-        <!-- Section Header -->
-        <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <h2 class="font-bold text-sm tracking-wide text-slate-200">FinTech</h2>
-          </div>
-          <span id="count-FinTech" class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0/0</span>
-        </div>
-        <!-- Task Items List -->
-        <div id="list-FinTech" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
-        <!-- Add Item Input -->
-        <div class="p-2 border-t border-slate-800/80 bg-slate-950/40">
-          <form onsubmit="addTask(event, 'FinTech')" class="flex space-x-1.5">
-            <input type="text" id="input-FinTech" placeholder="+ Add FinTech task..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-            <button type="submit" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold">Add</button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Column 3: Personal -->
-      <div class="bg-slate-900/60 rounded-2xl border border-slate-800/80 flex flex-col overflow-hidden backdrop-blur-md">
-        <!-- Section Header -->
-        <div class="p-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-            <h2 class="font-bold text-sm tracking-wide text-slate-200">Personal</h2>
-          </div>
-          <span id="count-Personal" class="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0/0</span>
-        </div>
-        <!-- Task Items List -->
-        <div id="list-Personal" class="flex-1 overflow-y-auto p-3 space-y-2"></div>
-        <!-- Add Item Input -->
-        <div class="p-2 border-t border-slate-800/80 bg-slate-950/40">
-          <form onsubmit="addTask(event, 'Personal')" class="flex space-x-1.5">
-            <input type="text" id="input-Personal" placeholder="+ Add Personal task..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
-            <button type="submit" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold">Add</button>
-          </form>
-        </div>
-      </div>
-
-    </section>
-
-  </main>
-
-  <!-- MODAL: FETCH TASKS FROM EXTERNAL URL -->
-  <div id="url-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-base text-slate-100 flex items-center space-x-2">
-          <i class="fa-solid fa-cloud-arrow-down text-indigo-400"></i>
-          <span>Fetch Daily Tasks from URL</span>
-        </h3>
-        <button onclick="toggleUrlModal()" class="text-slate-400 hover:text-white p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <p class="text-xs text-slate-400 leading-relaxed">
-        Enter a public URL serving JSON formatted tasks (e.g. GitHub Gist raw URL). Tasks will be loaded automatically into Work, FinTech, and Personal lists.
-      </p>
-
-      <div class="space-y-2">
-        <label class="text-xs font-semibold text-slate-300">JSON Endpoint URL</label>
-        <input type="url" id="json-url-input" placeholder="https://gist.githubusercontent.com/.../tasks.json" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 font-mono">
-      </div>
-
-      <!-- JSON Format Helper Code Block -->
-      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80 text-[11px] font-mono text-slate-400 space-y-1">
-        <div class="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Expected JSON Structure:</div>
-        <pre class="text-slate-300">{
-  "Work": ["Deploy code", "Review PRs"],
-  "FinTech": ["Run backtest", "Sync feeds"],
-  "Personal": ["Dead hangs 3x60s", "Hydrate"]
-}</pre>
-      </div>
-
-      <div class="flex space-x-3 pt-2">
-        <button onclick="fetchTasksFromUrl()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-2">
-          <i class="fa-solid fa-download"></i>
-          <span>Load Tasks</span>
-        </button>
-        <button onclick="loadSampleData()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold border border-slate-700 transition">
-          Reset Demo Data
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- JAVASCRIPT APP LOGIC -->
-  <script>
-    // --- APP STATE ---
-    let currentMode = 'clock'; // 'clock' or 'stopwatch'
-    let is24HourFormat = false;
-    let audioEnabled = true;
-
-    // Default Task Data
-    let taskData = {
-      Work: [],
-      FinTech: [],
-      Personal: []
-    };
-
-    // --- CLOCK MODULE ---
-    function updateClock() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-
-      let ampm = '';
-      if (!is24HourFormat) {
-        ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12; // 0 becomes 12
-      }
-      const hoursStr = String(hours).padStart(2, '0');
-
-      const clockEl = document.getElementById('clock-display');
-      const ampmEl = document.getElementById('clock-ampm');
-      const dateEl = document.getElementById('clock-date');
-
-      if (clockEl) clockEl.textContent = `${hoursStr}:${minutes}:${seconds}`;
-      if (ampmEl) ampmEl.textContent = is24HourFormat ? '' : ampm;
-
-      if (dateEl) {
-        const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
-        dateEl.textContent = now.toLocaleDateString('en-US', options);
-      }
-    }
-
-    function toggleTimeFormat() {
-      is24HourFormat = !is24HourFormat;
-      const btn = document.getElementById('format-btn');
-      if (btn) btn.textContent = is24HourFormat ? '24H' : '12H';
-      updateClock();
-    }
-
-    // --- STOPWATCH MODULE ---
-    let timerInterval = null;
-    let timerMs = 0;
-    let isTimerRunning = false;
-    let countdownInterval = null;
-
-    // Web Audio API Beep Generator
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBeep(freq = 800, duration = 0.15) {
-      if (!audioEnabled) return;
-      try {
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch (e) {
-        console.warn('Audio play failed:', e);
-      }
-    }
-
-    function toggleAudioBeep() {
-      audioEnabled = !audioEnabled;
-      const icon = document.getElementById('audio-icon');
-      if (icon) {
-        icon.className = audioEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-slate-500';
-      }
-    }
-
-    function formatStopwatchTime(ms) {
-      const totalSec = Math.floor(ms / 1000);
-      const minutes = String(Math.floor(totalSec / 60)).padStart(2, '0');
-      const seconds = String(totalSec % 60).padStart(2, '0');
-      const tenths = Math.floor((ms % 1000) / 100);
-      return `${minutes}:${seconds}.${tenths}`;
-    }
-
-    function updateStopwatchDisplay() {
-      const display = document.getElementById('stopwatch-display');
-      if (display) display.textContent = formatStopwatchTime(timerMs);
-    }
-
-    function toggleTimer() {
-      cancelCountdown();
-      if (isTimerRunning) {
-        pauseTimer();
-      } else {
-        startTimer();
-      }
-    }
-
-    function startTimer() {
-      if (isTimerRunning) return;
-      isTimerRunning = true;
-      const startTime = Date.now() - timerMs;
-      timerInterval = setInterval(() => {
-        timerMs = Date.now() - startTime;
-        updateStopwatchDisplay();
-      }, 50);
-
-      const playIcon = document.getElementById('btn-play-icon');
-      const playText = document.getElementById('btn-play-text');
-      const playBtn = document.getElementById('btn-toggle-timer');
-
-      if (playIcon) playIcon.className = 'fa-solid fa-pause';
-      if (playText) playText.textContent = 'Pause';
-      if (playBtn) playBtn.className = 'px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-600/20 transition flex items-center space-x-2';
-    }
-
-    function pauseTimer() {
-      isTimerRunning = false;
-      clearInterval(timerInterval);
-
-      const playIcon = document.getElementById('btn-play-icon');
-      const playText = document.getElementById('btn-play-text');
-      const playBtn = document.getElementById('btn-toggle-timer');
-
-      if (playIcon) playIcon.className = 'fa-solid fa-play';
-      if (playText) playText.textContent = 'Resume';
-      if (playBtn) playBtn.className = 'px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition flex items-center space-x-2';
-    }
-
-    function resetTimer() {
-      cancelCountdown();
-      pauseTimer();
-      timerMs = 0;
-      updateStopwatchDisplay();
-      const playText = document.getElementById('btn-play-text');
-      if (playText) playText.textContent = 'Start Now';
-    }
-
-    function startWithDelay(seconds = 5) {
-      if (isTimerRunning) pauseTimer();
-      cancelCountdown();
-
-      const banner = document.getElementById('countdown-banner');
-      const countdownText = document.getElementById('countdown-text');
-      if (banner) banner.classList.remove('opacity-0');
-
-      let count = seconds;
-      if (countdownText) countdownText.textContent = `GET READY: ${count}`;
-      playBeep(600, 0.15);
-
-      countdownInterval = setInterval(() => {
-        count--;
-        if (count > 0) {
-          if (countdownText) countdownText.textContent = `GET READY: ${count}`;
-          playBeep(600, 0.15);
-        } else {
-          cancelCountdown();
-          playBeep(1200, 0.4); // High pitch start beep
-          startTimer();
-        }
-      }, 1000);
-    }
-
-    function cancelCountdown() {
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
-      const banner = document.getElementById('countdown-banner');
-      if (banner) banner.classList.add('opacity-0');
-    }
-
-    // --- WEATHER MODULE ---
-    let userLat = 25.8195; // Default: Doral/Miami FL
-    let userLon = -80.3553;
-
-    function initGeolocation() {
-      fetchWeather();
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            userLat = pos.coords.latitude;
-            userLon = pos.coords.longitude;
-            const cityEl = document.getElementById('weather-city');
-            if (cityEl) cityEl.textContent = 'Local Location';
-            fetchWeather();
-          },
-          (err) => {
-            console.warn('Geolocation denied/unavailable, using default location.');
-            const cityEl = document.getElementById('weather-city');
-            if (cityEl) cityEl.textContent = 'Miami / Doral';
-          },
-          { timeout: 5000 }
-        );
-      }
-    }
-
-    async function fetchWeather() {
-      try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Weather API ${res.status}`);
-        const data = await res.json();
-
-        const temp = Math.round(data.current?.temperature_2m ?? data.current_weather?.temperature ?? 0);
-        const high = Math.round(data.daily?.temperature_2m_max?.[0] ?? temp);
-        const low = Math.round(data.daily?.temperature_2m_min?.[0] ?? temp);
-        const code = data.current?.weather_code ?? data.current_weather?.weathercode ?? 0;
-
-        const tempEl = document.getElementById('weather-temp');
-        const rangeEl = document.getElementById('weather-range');
-        const iconContainer = document.getElementById('weather-icon-container');
-
-        if (tempEl) tempEl.textContent = `${temp}°F`;
-        if (rangeEl) rangeEl.textContent = `H: ${high}° L: ${low}°`;
-
-        if (iconContainer) {
-          iconContainer.innerHTML = getWeatherIconHTML(code);
-        }
-      } catch (e) {
-        console.error('Weather error:', e);
-        const cityEl = document.getElementById('weather-city');
-        if (cityEl) cityEl.textContent = 'Weather Unavailable';
-      }
-    }
-
-    function getWeatherIconHTML(code) {
-      if (code === 0) return `<i class="fa-solid fa-sun text-amber-400"></i>`;
-      if (code <= 3) return `<i class="fa-solid fa-cloud-sun text-slate-300"></i>`;
-      if (code <= 48) return `<i class="fa-solid fa-smog text-slate-400"></i>`;
-      if (code <= 67) return `<i class="fa-solid fa-cloud-rain text-blue-400"></i>`;
-      if (code <= 77) return `<i class="fa-solid fa-snowflake text-indigo-300"></i>`;
-      if (code <= 82) return `<i class="fa-solid fa-cloud-showers-heavy text-blue-500"></i>`;
-      return `<i class="fa-solid fa-bolt text-yellow-400"></i>`;
-    }
-
-    // Custom Mode Labels
-    let customLabels = {
-      clock: localStorage.getItem('ipad_label_clock') || 'Gym Wall Clock',
-      stopwatch: localStorage.getItem('ipad_label_stopwatch') || 'Dead Hang Timer'
-    };
-
-    // Long Press Timer State
-    let longPressTimer = null;
-    let isLongPressTriggered = false;
-
-    function handleModeTap(mode) {
-      // Prevent tab switch if a long-press rename was activated
-      if (isLongPressTriggered) {
-        isLongPressTriggered = false;
-        return;
-      }
-      switchMode(mode);
-    }
-
-    function startPressTimer(modeKey) {
-      isLongPressTriggered = false;
-      longPressTimer = setTimeout(() => {
-        isLongPressTriggered = true;
-        promptRename(modeKey);
-      }, 650); // 650ms long-press hold duration
-    }
-
-    function cancelPressTimer() {
-      if (longPressTimer) {
-        clearTimeout(longPressTimer);
-        longPressTimer = null;
-      }
-    }
-
-    function promptRename(modeKey) {
-      cancelPressTimer();
-      const currentName = customLabels[modeKey];
-      const newName = prompt(`Rename Mode:`, currentName);
-      if (newName !== null && newName.trim() !== "") {
-        const trimmed = newName.trim();
-        customLabels[modeKey] = trimmed;
-        localStorage.setItem(`ipad_label_${modeKey}`, trimmed);
-        renderModeLabels();
-      }
-    }
-
-    // --- MODE SWITCHER ---
-    function switchMode(mode) {
-      currentMode = mode;
-      const indicator = document.getElementById('switch-indicator');
-      const btnClock = document.getElementById('btn-mode-clock');
-      const btnStopwatch = document.getElementById('btn-mode-stopwatch');
-      const clockView = document.getElementById('view-clock');
-      const stopwatchView = document.getElementById('view-stopwatch');
-
-      if (mode === 'clock') {
-        indicator.style.transform = 'translateX(0%)';
-        btnClock.className = "relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-white";
-        btnStopwatch.className = "relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-slate-400";
-        clockView.classList.remove('hidden');
-        stopwatchView.classList.add('hidden');
-      } else {
-        indicator.style.transform = 'translateX(100%)';
-        btnStopwatch.className = "relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-white";
-        btnClock.className = "relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-slate-400";
-        stopwatchView.classList.remove('hidden');
-        clockView.classList.add('hidden');
-      }
-    }
-
-    function renderModeLabels() {
-      const clockSpan = document.getElementById('label-clock');
-      const stopwatchSpan = document.getElementById('label-stopwatch');
-      if (clockSpan) clockSpan.textContent = customLabels.clock;
-      if (stopwatchSpan) stopwatchSpan.textContent = customLabels.stopwatch;
-    }
-
-    // --- TO-DO LIST MODULE ---
-    function renderTasks() {
-      const categories = ['Work', 'FinTech', 'Personal'];
-
-      categories.forEach(cat => {
-        const listEl = document.getElementById(`list-${cat}`);
-        const countEl = document.getElementById(`count-${cat}`);
-        const tasks = taskData[cat] || [];
-        
-        const completedCount = tasks.filter(t => t.completed).length;
-        if (countEl) countEl.textContent = `${completedCount}/${tasks.length}`;
-
-        if (!listEl) return;
-        listEl.innerHTML = '';
-        
-        if (tasks.length === 0) {
-          listEl.innerHTML = `<div class="text-xs text-slate-600 italic text-center py-6">No tasks added</div>`;
-          return;
-        }
-
-        tasks.forEach(task => {
-          const itemEl = document.createElement('div');
-          itemEl.className = `group flex items-center justify-between p-2.5 rounded-xl border transition-all ${
-            task.completed 
-              ? 'bg-slate-950/40 border-slate-900 text-slate-500' 
-              : 'bg-slate-900 border-slate-800 text-slate-200 hover:border-slate-700'
-          }`;
-
-          itemEl.innerHTML = `
-            <label class="flex items-center space-x-3 flex-1 cursor-pointer overflow-hidden pr-2">
-              <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${cat}', ${task.id})" class="w-4 h-4 rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer">
-              <span class="text-xs font-medium truncate ${task.completed ? 'line-through text-slate-500' : ''}">${escapeHtml(task.text)}</span>
-            </label>
-            <button onclick="deleteTask('${cat}', ${task.id})" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 p-1 transition" title="Delete Task">
-              <i class="fa-regular fa-trash-can text-xs"></i>
-            </button>
-          `;
-          listEl.appendChild(itemEl);
-        });
-      });
-
-      saveLocalTasks();
-    }
-
-    function toggleTask(category, id) {
-      taskData[category] = taskData[category].map(t => {
-        if (t.id === id) return { ...t, completed: !t.completed };
-        return t;
-      });
-      renderTasks();
-    }
-
-    function addTask(event, category) {
-      event.preventDefault();
-      const input = document.getElementById(`input-${category}`);
-      const text = input.value.trim();
-      if (!text) return;
-
-      if (!taskData[category]) taskData[category] = [];
-      taskData[category].push({
-        id: Date.now(),
-        text: text,
-        completed: false
-      });
-
-      input.value = '';
-      renderTasks();
-    }
-
-    function deleteTask(category, id) {
-      taskData[category] = taskData[category].filter(t => t.id !== id);
-      renderTasks();
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // --- LOCAL STORAGE PERSISTENCE ---
-    function saveLocalTasks() {
-      try {
-        localStorage.setItem('ipad_dashboard_tasks', JSON.stringify(taskData));
-      } catch (e) {
-        console.error("Local Storage save error", e);
-      }
-    }
-
-    function loadLocalTasks() {
-      try {
-        const saved = localStorage.getItem('ipad_dashboard_tasks');
-        if (saved) {
-          taskData = JSON.parse(saved);
-        }
-      } catch (e) {
-        console.error("Local Storage load error", e);
-      }
-    }
-
-    // --- FETCH TASKS VIA URL ---
-    let savedGistUrl = localStorage.getItem('ipad_dashboard_gist_url') || '';
-
-    function toggleUrlModal() {
-      const modal = document.getElementById('url-modal');
-      const isVisible = !modal.classList.contains('opacity-0');
-      if (isVisible) {
-        modal.classList.add('opacity-0', 'pointer-events-none');
-      } else {
-        if (savedGistUrl) {
-          document.getElementById('json-url-input').value = savedGistUrl;
-        }
-        modal.classList.remove('opacity-0', 'pointer-events-none');
-      }
-    }
-
-    async function fetchTasksFromUrl(isManualSync = false) {
-      let urlInput = document.getElementById('json-url-input').value.trim();
-      if (!urlInput && savedGistUrl) {
-        urlInput = savedGistUrl;
-      }
-      if (!urlInput) return;
-
-      const syncIcon = document.getElementById('sync-icon');
-      if (syncIcon) syncIcon.classList.add('animate-spin');
-
-      try {
-        // Append cache-busting timestamp to prevent iPad Safari from caching old Gist state
-        const cacheBustUrl = urlInput + (urlInput.includes('?') ? '&' : '?') + '_t=' + Date.now();
-        const res = await fetch(cacheBustUrl);
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-        const data = await res.json();
-
-        // Save URL for future auto-syncing
-        savedGistUrl = urlInput;
-        localStorage.setItem('ipad_dashboard_gist_url', urlInput);
-
-        const newTasks = { Work: [], FinTech: [], Personal: [] };
-        
-        ['Work', 'FinTech', 'Personal'].forEach(cat => {
-          if (Array.isArray(data[cat])) {
-            newTasks[cat] = data[cat].map((item, idx) => {
-              if (typeof item === 'string') {
-                return { id: Date.now() + idx, text: item, completed: false };
-              }
-              return { id: item.id || Date.now() + idx, text: item.text || String(item), completed: !!item.completed };
-            });
-          }
-        });
-
-        taskData = newTasks;
-        renderTasks();
-        if (!isManualSync && !document.getElementById('url-modal').classList.contains('opacity-0')) {
-          toggleUrlModal();
-        }
-      } catch (err) {
-        if (isManualSync) {
-          console.warn("Background auto-sync failed:", err);
-        } else {
-          alert("Failed to fetch JSON tasks. Please verify URL CORS settings and JSON format.");
-        }
-      } finally {
-        if (syncIcon) {
-          setTimeout(() => syncIcon.classList.remove('animate-spin'), 600);
-        }
-      }
-    }
-
-    function loadSampleData() {
-      taskData = {
-        Work: [
-          { id: 1, text: "Review pull requests", completed: false },
-          { id: 2, text: "Deploy staging server build", completed: true },
-          { id: 3, text: "Prep system architecture specs", completed: false }
-        ],
-        FinTech: [
-          { id: 4, text: "Run daily algorithmic backtest", completed: false },
-          { id: 5, text: "Reconcile market feed latency", completed: true },
-          { id: 6, text: "Review portfolio allocation", completed: false }
-        ],
-        Personal: [
-          { id: 7, text: "Dead hangs: 3 sets x 60 seconds", completed: false },
-          { id: 8, text: "Mobility & shoulder stretches", completed: false },
-          { id: 9, text: "Hydrate 3L target", completed: true }
-        ]
-      };
-      renderTasks();
-      toggleUrlModal();
-    }
-
-    // --- INITIALIZATION ---
-    window.onload = function() {
-      // 1. Clock loop
-      updateClock();
-      setInterval(updateClock, 1000);
-
-      // 2. Render Mode Labels
-      renderModeLabels();
-
-      // 3. Weather init + 15 min refresh interval
-      initGeolocation();
-      setInterval(fetchWeather, 15 * 60 * 1000);
-
-      // 4. Load tasks locally initially
-      loadLocalTasks();
-      renderTasks();
-
-      // 5. If a Gist URL was previously saved, auto-fetch on boot & set up 60-second auto-refresh
-      if (savedGistUrl) {
-        fetchTasksFromUrl(true);
-        // Auto-refresh Gist every 60 seconds seamlessly in the background
-        setInterval(() => fetchTasksFromUrl(true), 60 * 1000);
-      }
-
-      // 6. iOS AudioContext unlock
-      document.body.addEventListener('touchstart', function() {
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-      }, { once: true });
-    };
-  </script>
-</body>
-</html>
+        <!-- Countdown Banner Overlay -->
+        <div id="countdownBanner" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-400 px-6 py-1.5 rounded-full text-xs font
