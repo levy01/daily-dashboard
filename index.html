@@ -302,7 +302,7 @@
     // Weather State Defaults (Doral / Miami area default coordinates)
     let userLat = 25.8195;
     let userLon = -80.3553;
-    let userCityName = "Local Weather";
+    let userCityName = "Miami / Doral";
 
     // Stopwatch State
     let stopwatchInterval = null;
@@ -334,16 +334,16 @@
     // --- WEATHER MODULE (Open-Meteo API) ---
     async function fetchWeather() {
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2d,weather_code&current_weather=true&daily=temperature_2d_max,temperature_2d_min&temperature_unit=fahrenheit&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,weather_code&current_weather=true&daily=temperature_2d_max,temperature_2d_min&temperature_unit=fahrenheit&timezone=auto`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
         let currentTemp, weatherCode;
-        if (data.current) {
-          currentTemp = Math.round(data.current.temperature_2d);
+        if (data.current && data.current.temperature_2m !== undefined) {
+          currentTemp = Math.round(data.current.temperature_2m);
           weatherCode = data.current.weather_code;
-        } else if (data.current_weather) {
+        } else if (data.current_weather && data.current_weather.temperature !== undefined) {
           currentTemp = Math.round(data.current_weather.temperature);
           weatherCode = data.current_weather.weathercode;
         }
@@ -358,11 +358,11 @@
 
           setWeatherIcon(weatherCode);
         } else {
-          throw new Error("Invalid weather data payload");
+          throw new Error("Invalid weather payload");
         }
       } catch (err) {
         console.warn("Weather fetch failed:", err);
-        document.getElementById('weather-city').textContent = "Weather Error";
+        document.getElementById('weather-city').textContent = "Weather Unavailable";
       }
     }
 
