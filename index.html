@@ -75,17 +75,17 @@
   <!-- Top Header / Navigation Bar -->
   <header class="flex items-center justify-between px-6 py-2 border-b border-slate-800/80 bg-[#0b0f1d]/90 gap-4">
     
-    <!-- Left Section: Title & Unified 5-Segment Single Pill Switcher -->
-    <div class="flex items-center space-x-4 min-w-0 flex-1">
-      <div class="flex items-center space-x-2 shrink-0">
-        <div class="w-5 h-5 rounded-md bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
-          <i class="fa-solid fa-bullseye text-[10px]"></i>
-        </div>
-        <h1 class="text-xs font-bold text-slate-200 tracking-tight hidden sm:block">timing it</h1>
+    <!-- Left Section: Title & Logo -->
+    <div class="flex items-center space-x-2 shrink-0">
+      <div class="w-5 h-5 rounded-md bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+        <i class="fa-solid fa-bullseye text-[10px]"></i>
       </div>
+      <h1 class="text-xs font-bold text-slate-200 tracking-tight hidden sm:block">timing it</h1>
+    </div>
 
-      <!-- Single Cohesive Segmented Switcher Pill Container -->
-      <div class="flex items-center bg-slate-900/90 border border-slate-800 rounded-xl p-1 overflow-x-auto no-scrollbar min-w-0 shrink-0 shadow-inner">
+    <!-- Center Section: Unified 5-Segment Single Pill Switcher -->
+    <div class="flex items-center justify-center min-w-0 flex-1">
+      <div class="flex items-center bg-slate-900/90 border border-slate-800 rounded-xl p-1 overflow-x-auto no-scrollbar max-w-full shrink-0 shadow-inner">
         <button onclick="setMode('clock')" id="btnModeClock" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 bg-indigo-600/30 text-indigo-300 shadow">
           <i class="fa-regular fa-clock text-[11px]"></i>
           <span id="labelClock">Clock</span>
@@ -114,7 +114,7 @@
     </div>
 
     <!-- Right Header Controls -->
-    <div class="flex items-center space-x-2 shrink-0 ml-auto">
+    <div class="flex items-center space-x-2 shrink-0">
       <button onclick="loadTasksFromUrl(true)" title="Sync Tasks" class="bg-[#111628] border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white w-9 h-9 rounded-xl flex items-center justify-center transition">
         <i id="syncIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
       </button>
@@ -421,21 +421,8 @@
       </div>
       
       <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-        <!-- Live Market Ticker Bar -->
-        <div class="grid grid-cols-3 gap-2">
-          <div class="bg-[#111628] border border-slate-800 p-2.5 rounded-lg text-center">
-            <span class="text-[10px] text-slate-400 font-bold block">S&P 500</span>
-            <span class="text-xs font-bold text-emerald-400">5,864.67 <i class="fa-solid fa-caret-up text-[10px]"></i></span>
-          </div>
-          <div class="bg-[#111628] border border-slate-800 p-2.5 rounded-lg text-center">
-            <span class="text-[10px] text-slate-400 font-bold block">NASDAQ</span>
-            <span class="text-xs font-bold text-emerald-400">18,518.61 <i class="fa-solid fa-caret-up text-[10px]"></i></span>
-          </div>
-          <div class="bg-[#111628] border border-slate-800 p-2.5 rounded-lg text-center">
-            <span class="text-[10px] text-slate-400 font-bold block">10Y TREASURY</span>
-            <span class="text-xs font-bold text-amber-400">4.24% <i class="fa-solid fa-minus text-[10px]"></i></span>
-          </div>
-        </div>
+        <!-- Live Market Ticker Bar (Dynamic) -->
+        <div id="newsTickerContainer" class="grid grid-cols-3 gap-2"></div>
 
         <!-- Headline Articles Container -->
         <h4 id="newsModalSubhead" class="text-xs font-bold text-slate-400 uppercase tracking-wider pt-2">Today's Headlines</h4>
