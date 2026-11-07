@@ -127,19 +127,39 @@
 
   <!-- Main Content Layout -->
   <main class="flex-1 flex flex-col justify-between p-4 space-y-3 min-h-0">
-    <section class="bg-[#0b0f1d]/80 rounded-2xl border border-slate-800/90 py-5 px-6 flex flex-col items-center justify-center relative shadow-xl">
+    <section class="bg-[#0b0f1d]/80 rounded-2xl border border-slate-800/90 py-5 px-6 flex flex-col items-center justify-center relative shadow-xl min-h-[220px]">
       
-      <!-- MODE 1: GYM WALL CLOCK DISPLAY -->
-      <div id="clockDisplaySection" class="flex flex-col items-center justify-center">
-        <div class="flex items-baseline space-x-3">
-          <div id="clockDigits" class="digital-font digital-led-red text-8xl sm:text-9xl font-black tracking-tight leading-none">
-            02:37:52
+      <!-- MODE 1: GYM WALL CLOCK DISPLAY (Supports Dual Time Zone Layout) -->
+      <div id="clockDisplaySection" class="flex flex-col items-center justify-center w-full">
+        <!-- Main Clocks Container: Dynamic Grid based on Dual Clock setting -->
+        <div id="dualClockContainer" class="flex flex-wrap items-center justify-center gap-6 sm:gap-12 w-full">
+          
+          <!-- Primary / Local Wall Clock -->
+          <div class="flex flex-col items-center">
+            <span id="primaryClockLabel" class="hidden text-[11px] font-bold tracking-widest text-indigo-400 uppercase mb-1">LOCAL TIME</span>
+            <div class="flex items-baseline space-x-3">
+              <div id="clockDigits" class="digital-font digital-led-red text-7xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none">
+                02:37:52
+              </div>
+              <span id="clockAmPm" class="text-slate-400 font-bold text-xl sm:text-2xl tracking-wider">AM</span>
+            </div>
           </div>
-          <span id="clockAmPm" class="text-slate-400 font-bold text-2xl tracking-wider">AM</span>
+
+          <!-- Secondary World Clock (Hidden by default until enabled in Settings) -->
+          <div id="secondaryClockCard" class="hidden flex-col items-center pl-6 border-l border-slate-800/80">
+            <span id="secondaryClockLabel" class="text-[11px] font-bold tracking-widest text-indigo-400 uppercase mb-1">LONDON (GMT)</span>
+            <div class="flex items-baseline space-x-2">
+              <div id="secondaryClockDigits" class="digital-font text-6xl sm:text-7xl md:text-8xl font-black tracking-tight leading-none text-slate-300">
+                07:37:52
+              </div>
+              <span id="secondaryClockAmPm" class="text-slate-400 font-bold text-lg sm:text-xl tracking-wider">AM</span>
+            </div>
+          </div>
+
         </div>
         
-        <!-- Clean Single Line: Date + Integrated Weather + Optional World Clock -->
-        <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-slate-400 text-xs font-bold uppercase tracking-wider pt-3">
+        <!-- Clean Single Line: Date + Integrated Weather -->
+        <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-slate-400 text-xs font-bold uppercase tracking-wider pt-4">
           <button onclick="openNewsModal()" title="View Market News Briefing" class="hover:text-indigo-400 transition cursor-pointer flex items-center gap-1.5">
             <span id="clockDate">SAT, NOV 7, 2026</span>
             <i class="fa-solid fa-newspaper text-[10px] text-indigo-400/80"></i>
@@ -147,50 +167,13 @@
           
           <span class="text-slate-700">•</span>
           
-          <button onclick="openWeatherModal()" title="View Weather Details" class="flex items-center space-x-2 text-slate-300 hover:text-white transition cursor-pointer bg-slate-900/40 hover:bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-800/50">
+          <button onclick="openWeatherModal()" title="View Weather Details" class="flex items-center space-x-2 text-slate-300 hover:text-white transition cursor-pointer bg-slate-900/40 hover:bg-slate-800/60 px-2.5 py-1 rounded-md border border-slate-800/50">
             <i id="weatherIcon" class="fa-solid fa-cloud-sun text-slate-300 text-sm"></i>
             <span id="weatherTemp" class="font-bold text-slate-100">74°F</span>
             <span id="weatherRange" class="text-slate-400 text-[11px] font-medium">H: 86° L: 73°</span>
             <span id="weatherCity" class="text-slate-400 text-[11px] font-normal truncate max-w-[140px]">
               <i class="fa-solid fa-location-dot text-[9px] ml-1 mr-0.5 text-slate-400"></i>Miami / Doral
             </span>
-          </button>
-
-          <div id="worldClockContainer" class="hidden items-center space-x-1.5 bg-slate-800/60 border border-slate-700/60 px-2.5 py-0.5 rounded-md text-indigo-300 font-mono text-[11px]">
-            <i class="fa-solid fa-globe text-[10px]"></i>
-            <span id="worldClockLabel">UTC</span>:
-            <span id="worldClockDigits" class="font-bold text-white">07:37</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- MODE 2: WORKOUT STOPWATCH / COUNTDOWN DISPLAY -->
-      <div id="timerDisplaySection" class="hidden flex-col items-center justify-center space-y-3 w-full">
-        
-        <!-- Countdown Delay Overlay Banner -->
-        <div id="countdownBanner" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-400 px-6 py-1 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse">
-          GET READY: <span id="countdownSecs">5</span>s
-        </div>
-
-        <!-- Stopwatch Digits -->
-        <div id="stopwatchDigits" class="digital-font text-8xl sm:text-9xl font-black tracking-tight leading-none digital-led-green">
-          00:00.0
-        </div>
-
-        <!-- Timer Control Buttons -->
-        <div class="flex items-center space-x-3 pt-2">
-          <button id="btnStartWithDelay" onclick="startWithDelay()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 py-2 rounded-xl text-xs transition shadow-md flex items-center space-x-1.5">
-            <i class="fa-solid fa-hourglass-start text-[11px]"></i>
-            <span>5s Delay Start</span>
-          </button>
-          
-          <button id="btnToggleTimer" onclick="if(isTimerRunning){pauseTimer();}else{startTimer();}" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold px-5 py-2 rounded-xl text-xs transition flex items-center space-x-1.5">
-            <i id="iconToggleTimer" class="fa-solid fa-play text-[11px]"></i>
-            <span id="textToggleTimer">Start</span>
-          </button>
-
-          <button onclick="resetTimer()" title="Reset Timer" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 font-bold px-3 py-2 rounded-xl text-xs transition">
-            <i class="fa-solid fa-rotate-left text-xs"></i>
           </button>
         </div>
       </div>
@@ -254,7 +237,36 @@
             </div>
           </div>
 
-          <!-- 4. Gist URL & PAT settings -->
+          <!-- 4. Secondary Time Zone Settings -->
+          <div class="pt-2 border-t border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Secondary World Clock</label>
+              <input type="checkbox" id="dualClockToggle" onchange="toggleDualClockSetting(this.checked)" class="w-4 h-4 rounded border-slate-700 bg-slate-950 text-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <div id="dualClockConfigGroup" class="hidden space-y-2 pl-2 border-l-2 border-indigo-500/40">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Time Zone</label>
+                <select id="secondaryTimezoneSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="UTC">UTC / GMT (Coordinated Universal Time)</option>
+                  <option value="Europe/London">London (GMT / BST)</option>
+                  <option value="Europe/Paris">Frankfurt / Paris (CET / CEST)</option>
+                  <option value="America/New_York">New York / Miami (EST / EDT)</option>
+                  <option value="America/Chicago">Chicago (CST / CDT)</option>
+                  <option value="America/Los_Angeles">San Francisco / LA (PST / PDT)</option>
+                  <option value="Asia/Tokyo">Tokyo (JST)</option>
+                  <option value="Asia/Singapore">Singapore (SGT)</option>
+                  <option value="Australia/Sydney">Sydney (AEST / AEDT)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Clock Label</label>
+                <input type="text" id="secondaryClockLabelInput" placeholder="e.g. London Office" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Gist URL & PAT settings -->
           <div class="pt-2 border-t border-slate-800 space-y-3">
             <div>
               <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Raw Gist JSON URL</label>
@@ -444,14 +456,9 @@
     let clockColor = localStorage.getItem('clockColor') || 'red';
     let is12Hour = localStorage.getItem('is12Hour') !== 'false';
     let newsCategory = localStorage.getItem('newsCategory') || 'Finance';
-
-    // Timer & Stopwatch State
-    let timerInterval = null;
-    let timerStartTime = 0;
-    let timerElapsedTime = 0;
-    let isTimerRunning = false;
-    let countdownInterval = null;
-    let timerDurationMs = 0; // 0 = stopwatch count up
+    let isDualClockEnabled = localStorage.getItem('isDualClockEnabled') === 'true';
+    let secondaryTimezone = localStorage.getItem('secondaryTimezone') || 'Europe/London';
+    let secondaryClockLabel = localStorage.getItem('secondaryClockLabel') || 'LONDON (GMT)';
 
     // Color Theme Map
     const COLOR_CLASSES = {
@@ -490,23 +497,24 @@
           btn12.className = 'flex-1 py-1 rounded text-xs font-bold text-slate-400';
         }
       }
+
+      // Dual Clock settings init
+      const toggle = id('dualClockToggle');
+      const configGroup = id('dualClockConfigGroup');
+      const tzSelect = id('secondaryTimezoneSelect');
+      const labelInput = id('secondaryClockLabelInput');
+
+      if (toggle) toggle.checked = isDualClockEnabled;
+      if (configGroup) configGroup.className = isDualClockEnabled ? 'space-y-2 pl-2 border-l-2 border-indigo-500/40 block' : 'hidden';
+      if (tzSelect) tzSelect.value = secondaryTimezone;
+      if (labelInput) labelInput.value = secondaryClockLabel;
     }
 
-    function setClockColor(color) {
-      clockColor = color;
-      localStorage.setItem('clockColor', color);
-      const digits = id('clockDigits');
-      if (digits) {
-        digits.className = `digital-font text-8xl sm:text-9xl font-black tracking-tight leading-none ${COLOR_CLASSES[color] || 'digital-led-red'}`;
-      }
+    function toggleDualClockSetting(enabled) {
+      isDualClockEnabled = enabled;
+      localStorage.setItem('isDualClockEnabled', enabled);
       initSettingsUI();
-    }
-
-    function setTimeFormat(use12Hour) {
-      is12Hour = use12Hour;
-      localStorage.setItem('is12Hour', use12Hour);
       updateClock();
-      initSettingsUI();
     }
 
     function saveGistSettings() {
@@ -519,61 +527,37 @@
         localStorage.setItem('newsCategory', newsCategory);
       }
 
+      // Dual Clock settings save
+      const toggle = id('dualClockToggle');
+      const tzSelect = id('secondaryTimezoneSelect');
+      const labelInput = id('secondaryClockLabelInput');
+
+      if (toggle) {
+        isDualClockEnabled = toggle.checked;
+        localStorage.setItem('isDualClockEnabled', isDualClockEnabled);
+      }
+      if (tzSelect) {
+        secondaryTimezone = tzSelect.value;
+        localStorage.setItem('secondaryTimezone', secondaryTimezone);
+      }
+      if (labelInput && labelInput.value.trim()) {
+        secondaryClockLabel = labelInput.value.trim();
+        localStorage.setItem('secondaryClockLabel', secondaryClockLabel);
+      }
+
       localStorage.setItem('gistTasksUrl', savedGistUrl);
       localStorage.setItem('githubPat', savedGithubPat);
 
       closeTaskModal();
+      updateClock();
       loadTasksFromUrl(true);
     }
 
-    // Mode Selector Handler
-    function setMode(mode) {
-      currentMode = mode;
-      resetTimer();
-
-      const secClock = id('clockDisplaySection');
-      const secTimer = id('timerDisplaySection');
-      const stopwatchDigits = id('stopwatchDigits');
-
-      // Update switcher pill active button highlights
-      ['Clock', 'Workout', 'Pomodoro', 'Shortbreak', 'Longbreak'].forEach(m => {
-        const btn = id(`btnMode${m}`);
-        if (!btn) return;
-        if (m.toLowerCase() === mode) {
-          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 bg-indigo-600/30 text-indigo-300 shadow';
-        } else {
-          btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 text-slate-400 hover:text-slate-200';
-        }
-      });
-
-      if (mode === 'clock') {
-        if (secClock) { secClock.classList.remove('hidden'); secClock.classList.add('flex'); }
-        if (secTimer) { secTimer.classList.remove('flex'); secTimer.classList.add('hidden'); }
-      } else {
-        if (secClock) { secClock.classList.remove('flex'); secClock.classList.add('hidden'); }
-        if (secTimer) { secTimer.classList.remove('hidden'); secTimer.classList.add('flex'); }
-
-        // Set duration for preset countdown timers
-        if (mode === 'workout') {
-          timerDurationMs = 0; // Stopwatch count-up
-          if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-8xl sm:text-9xl font-black tracking-tight leading-none digital-led-green';
-        } else if (mode === 'pomodoro') {
-          timerDurationMs = 25 * 60 * 1000;
-          if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-8xl sm:text-9xl font-black tracking-tight leading-none digital-led-terracotta';
-        } else if (mode === 'shortbreak') {
-          timerDurationMs = 5 * 60 * 1000;
-          if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-8xl sm:text-9xl font-black tracking-tight leading-none digital-led-cyan';
-        } else if (mode === 'longbreak') {
-          timerDurationMs = 15 * 60 * 1000;
-          if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-8xl sm:text-9xl font-black tracking-tight leading-none digital-led-blue';
-        }
-        renderStopwatch();
-      }
-    }
-
-    // Main Digital Wall Clock Update Routine
+    // Main Digital Wall Clock Update Routine (Local + 2nd Time Zone)
     function updateClock() {
       const now = new Date();
+      
+      // Primary Clock Logic
       let hours = now.getHours();
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
@@ -591,6 +575,46 @@
       
       const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
       if (id('clockDate')) id('clockDate').textContent = now.toLocaleDateString('en-US', options).toUpperCase();
+
+      // Secondary World Clock Logic
+      const secCard = id('secondaryClockCard');
+      const primLabel = id('primaryClockLabel');
+
+      if (isDualClockEnabled && secCard) {
+        secCard.classList.remove('hidden');
+        secCard.classList.add('flex');
+        if (primLabel) primLabel.classList.remove('hidden');
+
+        try {
+          const secFormatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: secondaryTimezone,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: is12Hour
+          });
+
+          const secParts = secFormatter.formatToParts(now);
+          let secH = '', secM = '', secS = '', secAmPm = '';
+          
+          secParts.forEach(p => {
+            if (p.type === 'hour') secH = p.value;
+            if (p.type === 'minute') secM = p.value;
+            if (p.type === 'second') secS = p.value;
+            if (p.type === 'dayPeriod') secAmPm = p.value.toUpperCase();
+          });
+
+          if (id('secondaryClockDigits')) id('secondaryClockDigits').textContent = `${secH}:${secM}:${secS}`;
+          if (id('secondaryClockAmPm')) id('secondaryClockAmPm').textContent = is12Hour ? secAmPm : '';
+          if (id('secondaryClockLabel')) id('secondaryClockLabel').textContent = secondaryClockLabel.toUpperCase();
+        } catch (e) {
+          console.error("Secondary clock error:", e);
+        }
+      } else if (secCard) {
+        secCard.classList.remove('flex');
+        secCard.classList.add('hidden');
+        if (primLabel) primLabel.classList.add('hidden');
+      }
     }
     setInterval(updateClock, 1000);
     updateClock();
