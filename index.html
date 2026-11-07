@@ -334,35 +334,42 @@
     // --- WEATHER MODULE (Open-Meteo API) ---
     async function fetchWeather() {
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current_weather=true&daily=temperature_2d_max,temperature_2d_min&temperature_unit=fahrenheit&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2d,weather_code&current_weather=true&daily=temperature_2d_max,temperature_2d_min&temperature_unit=fahrenheit&timezone=auto`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error("Weather API error");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        if (data && data.current_weather) {
-          const currentTemp = Math.round(data.current_weather.temperature);
-          const weatherCode = data.current_weather.weathercode;
-          const maxTemp = data.daily ? Math.round(data.daily.temperature_2d_max[0]) : '--';
-          const minTemp = data.daily ? Math.round(data.daily.temperature_2d_min[0]) : '--';
+        let currentTemp, weatherCode;
+        if (data.current) {
+          currentTemp = Math.round(data.current.temperature_2d);
+          weatherCode = data.current.weather_code;
+        } else if (data.current_weather) {
+          currentTemp = Math.round(data.current_weather.temperature);
+          weatherCode = data.current_weather.weathercode;
+        }
+
+        if (currentTemp !== undefined) {
+          const maxTemp = (data.daily && data.daily.temperature_2d_max) ? Math.round(data.daily.temperature_2d_max[0]) : '--';
+          const minTemp = (data.daily && data.daily.temperature_2d_min) ? Math.round(data.daily.temperature_2d_min[0]) : '--';
 
           document.getElementById('weather-temp').textContent = `${currentTemp}°F`;
           document.getElementById('weather-range').textContent = `H: ${maxTemp}° L: ${minTemp}°`;
           document.getElementById('weather-city').textContent = userCityName;
 
-          // Set Icon based on WMO Weather Code
           setWeatherIcon(weatherCode);
+        } else {
+          throw new Error("Invalid weather data payload");
         }
       } catch (err) {
-        console.warn("Weather fetch failed, falling back to defaults", err);
-        document.getElementById('weather-city').textContent = "Weather Unavailable";
+        console.warn("Weather fetch failed:", err);
+        document.getElementById('weather-city').textContent = "Weather Error";
       }
     }
 
     function setWeatherIcon(code) {
       const iconContainer = document.getElementById('weather-icon-container');
-      let iconHtml = '<i class="fa-solid fa-sun text-amber-400"></i>'; // Default Clear
+      let iconHtml = '<i class="fa-solid fa-sun text-amber-400"></i>';
 
-      // WMO Code Map
       if (code === 0) {
         iconHtml = '<i class="fa-solid fa-sun text-amber-400"></i>';
       } else if (code >= 1 && code <= 3) {
@@ -381,6 +388,10 @@
     }
 
     function initGeolocation() {
+      // Fetch immediately with default coordinates so UI doesn't wait
+      fetchWeather();
+
+      // Try fetching precise location in background if permitted
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -390,14 +401,10 @@
             fetchWeather();
           },
           (err) => {
-            console.log("Geolocation declined or unavailable, using default coordinates.");
-            userCityName = "Local Area";
-            fetchWeather();
+            console.log("Geolocation fallback to default area.");
           },
-          { timeout: 6000 }
+          { timeout: 5000 }
         );
-      } else {
-        fetchWeather();
       }
     }
 
