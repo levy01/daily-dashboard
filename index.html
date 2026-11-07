@@ -334,7 +334,7 @@
     // --- WEATHER MODULE (Open-Meteo API) ---
     async function fetchWeather() {
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,weather_code&current_weather=true&daily=temperature_2d_max,temperature_2d_min&temperature_unit=fahrenheit&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto`;
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -349,8 +349,8 @@
         }
 
         if (currentTemp !== undefined) {
-          const maxTemp = (data.daily && data.daily.temperature_2d_max) ? Math.round(data.daily.temperature_2d_max[0]) : '--';
-          const minTemp = (data.daily && data.daily.temperature_2d_min) ? Math.round(data.daily.temperature_2d_min[0]) : '--';
+          const maxTemp = (data.daily && data.daily.temperature_2m_max) ? Math.round(data.daily.temperature_2m_max[0]) : '--';
+          const minTemp = (data.daily && data.daily.temperature_2m_min) ? Math.round(data.daily.temperature_2m_min[0]) : '--';
 
           document.getElementById('weather-temp').textContent = `${currentTemp}°F`;
           document.getElementById('weather-range').textContent = `H: ${maxTemp}° L: ${minTemp}°`;
