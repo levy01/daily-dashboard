@@ -17,6 +17,9 @@
  * Updated are filled in automatically the next time any device syncs.
  */
 
+// Where the dashboard page is hosted. Change this if you host your own copy of index.html.
+var DASHBOARD_URL = 'https://levy01.github.io/daily-dashboard/';
+
 var TAB_TASKS = 'Tasks';
 var TAB_SETTINGS = 'Settings';
 var HEADERS = ['ID', 'Section', 'Task', 'Day', 'Done', 'Updated', 'Deleted'];
@@ -84,21 +87,41 @@ function setup() {
   return props.getProperty('API_KEY');
 }
 
+// Asks for the Web app URL once (the script cannot reliably know its own /exec address), remembers it,
+// and shows a ready-made pairing link: open it on any device to connect that device in one step.
 function showInfo() {
   var key = setup();
-  var url = ScriptApp.getService().getUrl();
   var ui = SpreadsheetApp.getUi();
-  if (!url) {
-    ui.alert('Not deployed yet',
-      'Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone), then run this again.',
-      ui.ButtonSet.OK);
+  var props = PropertiesService.getScriptProperties();
+  var saved = props.getProperty('API_URL') || '';
+  var r = ui.prompt('Dashboard connection',
+    'Paste your Web app URL (Deploy > Manage deployments > Web app URL, ends in /exec).' +
+    (saved ? '\n\nLeave blank to keep:\n' + saved : '\n\nNot deployed yet? Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone) first.'),
+    ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  var url = r.getResponseText().trim() || saved;
+  if (!/^https:\/\/script\.google\.com\/(macros\/s\/[A-Za-z0-9_-]+|a\/[^\/]+\/macros\/s\/[A-Za-z0-9_-]+)\/exec$/.test(url)) {
+    ui.alert('That does not look like a Web app URL',
+      'It should start with https://script.google.com/macros/s/ and end with /exec.', ui.ButtonSet.OK);
     return;
   }
-  ui.alert('Dashboard connection',
-    'Key:\n' + key +
-    '\n\nAPI URL: do NOT use the address this menu reports; it can differ from the real deployment.' +
-    '\nCopy the Web app URL from Deploy > Manage deployments instead (ends in /exec), paste it in the dashboard gear screen with this key.',
-    ui.ButtonSet.OK);
+  props.setProperty('API_URL', url);
+  var link = DASHBOARD_URL + '#api=' + encodeURIComponent(url) + '&key=' + encodeURIComponent(key);
+  var html = HtmlService.createHtmlOutput(
+    '<div style="font:14px Arial,sans-serif;line-height:1.5">' +
+    '<p><b>Open this link on each device you want to connect</b> (iPad, laptop, phone). ' +
+    'It pairs the device automatically. Keep it private: anyone with it can see and change your tasks.</p>' +
+    '<p><a href="' + esc_(link) + '" target="_blank" style="font-size:16px">Open dashboard and pair this device</a></p>' +
+    '<p>To pair another device, copy the link:</p>' +
+    '<textarea readonly onclick="this.select()" style="width:100%;height:110px;font:12px monospace">' + esc_(link) + '</textarea>' +
+    '<p style="color:#666;font-size:12px">iPad Home Screen app: a Home Screen icon has its own storage, so open the link in Safari first, ' +
+    'then add to Home Screen, then paste the URL and key under the gear icon (Key: ' + esc_(key) + ').</p>' +
+    '</div>').setWidth(560).setHeight(420);
+  ui.showModalDialog(html, 'Dashboard connection');
+}
+
+function esc_(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function rotateKey() {
