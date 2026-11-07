@@ -7,10 +7,9 @@ details on that person's own device.
 ## For the person sharing (one-time: make the template)
 1. Create a new Google Sheet named **Daily Dashboard (template)**.
 2. **Extensions > Apps Script**, paste in all of `Code.gs`, save.
-3. Reload the Sheet, then **Dashboard > Set up / repair this sheet** and approve the prompt.
-   This creates the empty **Tasks** and **Settings** tabs. Do not add any tasks.
-4. **Do not deploy it.** Do not run Show connection info (it adds a key and URL to the original only; copies
-   never inherit those, but there is no reason to risk it).
+3. **Do not run Set up, deploy it, or add any tasks.** Set up creates a secret key inside the script, and the
+   template should never have one. The new person's own Set up creates their tabs and their own key.
+4. Optional check: reload the Sheet and confirm a **Dashboard** menu appears. That proves the script saved.
 5. **Share** the Sheet: General access > Anyone with the link > **Viewer**.
 6. Take the Sheet's link, which looks like `https://docs.google.com/spreadsheets/d/<ID>/edit`, and change
    `edit` at the end to `copy`:
