@@ -1187,19 +1187,19 @@
           }
         });
 
-        // Sync remote section names across devices if provided in Gist JSON
+        // Force-sync remote section names into local state and localStorage for multi-device parity
         if (data.sectionNames && typeof data.sectionNames === 'object') {
           ['Work', 'FinTech', 'Personal'].forEach(secKey => {
-            if (data.sectionNames[secKey]) {
+            if (data.sectionNames[secKey] && data.sectionNames[secKey].trim() !== '') {
               sectionNames[secKey] = data.sectionNames[secKey];
               localStorage.setItem(`sectionName_${secKey}`, data.sectionNames[secKey]);
             }
           });
-          updateSectionTitlesUI();
         }
 
+        updateSectionTitlesUI();
         renderTasks();
-        if (showToast) alert('Tasks synced successfully!');
+        if (showToast) alert('Tasks & section names synced successfully!');
       } catch (err) {
         console.error('Fetch tasks error:', err);
       } finally {
@@ -1218,7 +1218,7 @@
         if (!match || !match[1]) return;
         const gistId = match[1];
 
-        // Include sectionNames payload in Gist writeback for multi-device parity
+        // Include sectionNames in the Gist payload
         const payloadData = {
           ...taskData,
           sectionNames: sectionNames
