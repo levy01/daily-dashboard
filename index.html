@@ -67,15 +67,37 @@
       </div>
     </div>
 
-    <!-- Mode Selector Tabs -->
-    <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80">
-      <button id="tab-clock" onclick="switchMode('clock')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-md">
-        <i class="fa-regular fa-clock"></i>
-        <span id="label-clock" onclick="renameModeLabel(event, 'clock')" class="cursor-pointer hover:underline" title="Click to rename label">Gym Wall Clock</span>
+    <!-- Sliding Mode Switcher -->
+    <div class="relative bg-slate-950 p-1 rounded-xl border border-slate-800/80 flex items-center w-72 h-10 select-none">
+      <!-- Sliding Active Indicator Background -->
+      <div id="switch-indicator" class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-indigo-600 rounded-lg shadow-md transition-all duration-300 ease-in-out"></div>
+      
+      <!-- Option 1: Clock -->
+      <button id="btn-mode-clock" 
+              onclick="handleModeTap('clock')" 
+              onmousedown="startPressTimer('clock')" 
+              onmouseup="cancelPressTimer()" 
+              onmouseleave="cancelPressTimer()"
+              ontouchstart="startPressTimer('clock')" 
+              ontouchend="cancelPressTimer()" 
+              ondblclick="promptRename('clock')"
+              class="relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-white">
+        <i class="fa-regular fa-clock text-xs"></i>
+        <span id="label-clock" class="truncate max-w-[90px]">Gym Wall Clock</span>
       </button>
-      <button id="tab-stopwatch" onclick="switchMode('stopwatch')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200">
-        <i class="fa-solid fa-stopwatch"></i>
-        <span id="label-stopwatch" onclick="renameModeLabel(event, 'stopwatch')" class="cursor-pointer hover:underline" title="Click to rename label">Dead Hang Timer</span>
+
+      <!-- Option 2: Stopwatch -->
+      <button id="btn-mode-stopwatch" 
+              onclick="handleModeTap('stopwatch')" 
+              onmousedown="startPressTimer('stopwatch')" 
+              onmouseup="cancelPressTimer()" 
+              onmouseleave="cancelPressTimer()"
+              ontouchstart="startPressTimer('stopwatch')" 
+              ontouchend="cancelPressTimer()" 
+              ondblclick="promptRename('stopwatch')"
+              class="relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-slate-400">
+        <i class="fa-solid fa-stopwatch text-xs"></i>
+        <span id="label-stopwatch" class="truncate max-w-[90px]">Dead Hang Timer</span>
       </button>
     </div>
 
@@ -299,306 +321,67 @@
       stopwatch: localStorage.getItem('ipad_label_stopwatch') || 'Dead Hang Timer'
     };
 
-    // Weather State Defaults (Doral / Miami area default coordinates)
-    let userLat = 25.8195;
-    let userLon = -80.3553;
-    let userCityName = "Miami / Doral";
+    // Long Press Timer State
+    let longPressTimer = null;
+    let isLongPressTriggered = false;
 
-    // Stopwatch State
-    let stopwatchInterval = null;
-    let stopwatchStartTime = 0;
-    let stopwatchElapsedTime = 0;
-    let isStopwatchRunning = false;
-    let delayCountdownInterval = null;
-    let delayRemaining = 0;
+    function handleModeTap(mode) {
+      // Prevent tab switch if a long-press rename was activated
+      if (isLongPressTriggered) {
+        isLongPressTriggered = false;
+        return;
+      }
+      switchMode(mode);
+    }
 
-    // Tasks State
-    let taskData = {
-      Work: [
-        { id: 1, text: "Review pull requests", completed: false },
-        { id: 2, text: "Deploy staging server build", completed: true },
-        { id: 3, text: "Prep system architecture specs", completed: false }
-      ],
-      FinTech: [
-        { id: 4, text: "Run daily algorithmic backtest", completed: false },
-        { id: 5, text: "Reconcile market feed latency", completed: true },
-        { id: 6, text: "Review portfolio allocation", completed: false }
-      ],
-      Personal: [
-        { id: 7, text: "Dead hangs: 3 sets x 60 seconds", completed: false },
-        { id: 8, text: "Mobility & shoulder stretches", completed: false },
-        { id: 9, text: "Hydrate 3L target", completed: true }
-      ]
-    };
+    function startPressTimer(modeKey) {
+      isLongPressTriggered = false;
+      longPressTimer = setTimeout(() => {
+        isLongPressTriggered = true;
+        promptRename(modeKey);
+      }, 650); // 650ms long-press hold duration
+    }
 
-    // --- WEATHER MODULE (Open-Meteo API) ---
-    async function fetchWeather() {
-      try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        let currentTemp, weatherCode;
-        if (data.current && data.current.temperature_2m !== undefined) {
-          currentTemp = Math.round(data.current.temperature_2m);
-          weatherCode = data.current.weather_code;
-        } else if (data.current_weather && data.current_weather.temperature !== undefined) {
-          currentTemp = Math.round(data.current_weather.temperature);
-          weatherCode = data.current_weather.weathercode;
-        }
-
-        if (currentTemp !== undefined) {
-          const maxTemp = (data.daily && data.daily.temperature_2m_max) ? Math.round(data.daily.temperature_2m_max[0]) : '--';
-          const minTemp = (data.daily && data.daily.temperature_2m_min) ? Math.round(data.daily.temperature_2m_min[0]) : '--';
-
-          document.getElementById('weather-temp').textContent = `${currentTemp}°F`;
-          document.getElementById('weather-range').textContent = `H: ${maxTemp}° L: ${minTemp}°`;
-          document.getElementById('weather-city').textContent = userCityName;
-
-          setWeatherIcon(weatherCode);
-        } else {
-          throw new Error("Invalid weather payload");
-        }
-      } catch (err) {
-        console.warn("Weather fetch failed:", err);
-        document.getElementById('weather-city').textContent = "Weather Unavailable";
+    function cancelPressTimer() {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
       }
     }
 
-    function setWeatherIcon(code) {
-      const iconContainer = document.getElementById('weather-icon-container');
-      let iconHtml = '<i class="fa-solid fa-sun text-amber-400"></i>';
-
-      if (code === 0) {
-        iconHtml = '<i class="fa-solid fa-sun text-amber-400"></i>';
-      } else if (code >= 1 && code <= 3) {
-        iconHtml = '<i class="fa-solid fa-cloud-sun text-amber-300"></i>';
-      } else if (code >= 45 && code <= 48) {
-        iconHtml = '<i class="fa-solid fa-smog text-slate-400"></i>';
-      } else if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
-        iconHtml = '<i class="fa-solid fa-cloud-showers-heavy text-sky-400"></i>';
-      } else if (code >= 71 && code <= 77) {
-        iconHtml = '<i class="fa-solid fa-snowflake text-indigo-300"></i>';
-      } else if (code >= 95) {
-        iconHtml = '<i class="fa-solid fa-cloud-bolt text-amber-500"></i>';
-      }
-
-      iconContainer.innerHTML = iconHtml;
-    }
-
-    function initGeolocation() {
-      // Fetch immediately with default coordinates so UI doesn't wait
-      fetchWeather();
-
-      // Try fetching precise location in background if permitted
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            userLat = pos.coords.latitude;
-            userLon = pos.coords.longitude;
-            userCityName = "Current Location";
-            fetchWeather();
-          },
-          (err) => {
-            console.log("Geolocation fallback to default area.");
-          },
-          { timeout: 5000 }
-        );
-      }
-    }
-
-    // --- AUDIO SYNTHESIZER ---
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-    function playBeep(freq = 600, duration = 0.1) {
-      if (!audioEnabled) return;
-      try {
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch (e) {
-        console.log("Audio play error:", e);
-      }
-    }
-
-    function toggleAudioBeep() {
-      audioEnabled = !audioEnabled;
-      const btn = document.getElementById('audio-toggle');
-      const icon = document.getElementById('audio-icon');
-      if (audioEnabled) {
-        btn.classList.replace('text-slate-500', 'text-slate-300');
-        icon.className = 'fa-solid fa-volume-high';
-      } else {
-        btn.classList.replace('text-slate-300', 'text-slate-500');
-        icon.className = 'fa-solid fa-volume-xmark';
-      }
-    }
-
-    // --- CLOCK MODULE ---
-    function updateClock() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      
-      let ampm = '';
-      if (!is24HourFormat) {
-        ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12;
-      }
-      
-      const formattedHours = String(hours).padStart(2, '0');
-      document.getElementById('clock-display').textContent = `${formattedHours}:${minutes}:${seconds}`;
-      document.getElementById('clock-ampm').textContent = is24HourFormat ? '' : ampm;
-
-      // Date Display
-      const options = { weekday: 'short', month: 'short', day: 'numeric' };
-      document.getElementById('clock-date').textContent = now.toLocaleDateString('en-US', options);
-    }
-
-    function toggleTimeFormat() {
-      is24HourFormat = !is24HourFormat;
-      document.getElementById('format-btn').textContent = is24HourFormat ? '24H' : '12H';
-      updateClock();
-    }
-
-    // --- STOPWATCH MODULE ---
-    function formatStopwatchTime(ms) {
-      const totalSeconds = Math.floor(ms / 1000);
-      const minutes = Math.floor(totalSeconds / 60);
-      const seconds = totalSeconds % 60;
-      const tenths = Math.floor((ms % 1000) / 100);
-
-      const mStr = String(minutes).padStart(2, '0');
-      const sStr = String(seconds).padStart(2, '0');
-      return `${mStr}:${sStr}.${tenths}`;
-    }
-
-    function updateStopwatchDisplay() {
-      document.getElementById('stopwatch-display').textContent = formatStopwatchTime(stopwatchElapsedTime);
-    }
-
-    function startTimer() {
-      if (isStopwatchRunning) return;
-      isStopwatchRunning = true;
-      stopwatchStartTime = Date.now() - stopwatchElapsedTime;
-      
-      stopwatchInterval = setInterval(() => {
-        stopwatchElapsedTime = Date.now() - stopwatchStartTime;
-        updateStopwatchDisplay();
-      }, 50);
-
-      document.getElementById('btn-play-icon').className = 'fa-solid fa-pause';
-      document.getElementById('btn-play-text').textContent = 'Pause';
-      document.getElementById('btn-toggle-timer').className = 'px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-600/20 transition flex items-center space-x-2';
-    }
-
-    function pauseTimer() {
-      if (!isStopwatchRunning) return;
-      isStopwatchRunning = false;
-      clearInterval(stopwatchInterval);
-
-      document.getElementById('btn-play-icon').className = 'fa-solid fa-play';
-      document.getElementById('btn-play-text').textContent = 'Resume';
-      document.getElementById('btn-toggle-timer').className = 'px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition flex items-center space-x-2';
-    }
-
-    function toggleTimer() {
-      cancelDelayCountdown();
-      if (isStopwatchRunning) {
-        pauseTimer();
-      } else {
-        startTimer();
-      }
-    }
-
-    function resetTimer() {
-      cancelDelayCountdown();
-      pauseTimer();
-      stopwatchElapsedTime = 0;
-      updateStopwatchDisplay();
-      document.getElementById('btn-play-text').textContent = 'Start Now';
-    }
-
-    function startWithDelay(seconds = 5) {
-      cancelDelayCountdown();
-      pauseTimer();
-      stopwatchElapsedTime = 0;
-      updateStopwatchDisplay();
-
-      delayRemaining = seconds;
-      const banner = document.getElementById('countdown-banner');
-      const bannerText = document.getElementById('countdown-text');
-      
-      banner.classList.remove('opacity-0');
-      bannerText.textContent = `GET READY: ${delayRemaining}`;
-      playBeep(440, 0.15);
-
-      delayCountdownInterval = setInterval(() => {
-        delayRemaining--;
-        if (delayRemaining > 0) {
-          bannerText.textContent = `GET READY: ${delayRemaining}`;
-          playBeep(440, 0.15);
-        } else {
-          cancelDelayCountdown();
-          bannerText.textContent = `GO!`;
-          playBeep(880, 0.4);
-          setTimeout(() => banner.classList.add('opacity-0'), 1200);
-          startTimer();
-        }
-      }, 1000);
-    }
-
-    function cancelDelayCountdown() {
-      if (delayCountdownInterval) {
-        clearInterval(delayCountdownInterval);
-        delayCountdownInterval = null;
-      }
-      document.getElementById('countdown-banner').classList.add('opacity-0');
-    }
-
-    // --- MODE SWITCHER ---
-    function switchMode(mode) {
-      currentMode = mode;
-      const clockTab = document.getElementById('tab-clock');
-      const stopwatchTab = document.getElementById('tab-stopwatch');
-      const clockView = document.getElementById('view-clock');
-      const stopwatchView = document.getElementById('view-stopwatch');
-
-      if (mode === 'clock') {
-        clockTab.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-md";
-        stopwatchTab.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200";
-        clockView.classList.remove('hidden');
-        stopwatchView.classList.add('hidden');
-      } else {
-        stopwatchTab.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-md";
-        clockTab.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200";
-        stopwatchView.classList.remove('hidden');
-        clockView.classList.add('hidden');
-      }
-    }
-
-    // --- CUSTOM LABEL RENAMING ---
-    function renameModeLabel(event, modeKey) {
-      event.stopPropagation(); // Don't trigger tab switch when clicking text to edit
+    function promptRename(modeKey) {
+      cancelPressTimer();
       const currentName = customLabels[modeKey];
-      const newName = prompt(`Enter custom label for this mode:`, currentName);
+      const newName = prompt(`Rename Mode:`, currentName);
       if (newName !== null && newName.trim() !== "") {
         const trimmed = newName.trim();
         customLabels[modeKey] = trimmed;
         localStorage.setItem(`ipad_label_${modeKey}`, trimmed);
         renderModeLabels();
+      }
+    }
+
+    // --- MODE SWITCHER ---
+    function switchMode(mode) {
+      currentMode = mode;
+      const indicator = document.getElementById('switch-indicator');
+      const btnClock = document.getElementById('btn-mode-clock');
+      const btnStopwatch = document.getElementById('btn-mode-stopwatch');
+      const clockView = document.getElementById('view-clock');
+      const stopwatchView = document.getElementById('view-stopwatch');
+
+      if (mode === 'clock') {
+        indicator.style.transform = 'translateX(0%)';
+        btnClock.className = "relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-white";
+        btnStopwatch.className = "relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-slate-400";
+        clockView.classList.remove('hidden');
+        stopwatchView.classList.add('hidden');
+      } else {
+        indicator.style.transform = 'translateX(100%)';
+        btnStopwatch.className = "relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-white";
+        btnClock.className = "relative z-10 w-1/2 h-full rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-colors text-slate-400";
+        stopwatchView.classList.remove('hidden');
+        clockView.classList.add('hidden');
       }
     }
 
