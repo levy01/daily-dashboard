@@ -40,6 +40,19 @@ Google News in Spanish with Spanish topics, and, if there are no tasks yet, rena
 Trabajo / Personal / Compras. The pairing link carries the language, so the dashboard is Spanish from the first screen.
 Send them `CONFIGURACION-ES.md`, a Spanish version of the steps above.
 
+## Setting it up for someone else (a caretaker setting up for an older person)
+The caretaker does the one-time setup on their own computer, then connects the other person's tablet by scanning.
+1. Make the copy and run the setup steps above **on the caretaker's computer, signed in to the Google account that
+   will own the dashboard** (the older person's account, or the caretaker's own: whichever should hold the tasks).
+2. **Dashboard > Show connection info** shows a **QR code**. On the tablet, open the **Camera** app, point it at the
+   screen, tap the banner that appears. The dashboard opens already connected, in the right language.
+3. Leave the dashboard open in Safari and set Settings > Display & Brightness > Auto-Lock to **Never** (and keep the
+   tablet plugged in). If you add it to the Home Screen instead, that icon has its own storage: open it, tap the gear,
+   and paste the URL and key once. Pairing in Safari does not carry over to the icon.
+4. The caretaker can later add or edit tasks from their own phone or laptop (same QR/link), or by typing straight
+   into the Sheet. The tablet picks changes up within a minute.
+5. Keep the QR code and pairing link private, since they give access to the tasks.
+
 ## Good to know
 - Each person's Google account runs their own script, so quota limits are per person and far above normal use.
 - Anyone holding a person's pairing link can read and change that person's tasks. **Dashboard > Rotate secret key**

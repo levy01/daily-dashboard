@@ -147,25 +147,41 @@ function showInfo() {
   }
   props.setProperty('API_URL', url);
   var link = DASHBOARD_URL + '#api=' + encodeURIComponent(url) + '&key=' + encodeURIComponent(key) + '&lang=' + (es ? 'es' : 'en');
-  var body = es
-    ? '<p><b>Abre este enlace en cada dispositivo que quieras conectar</b> (iPad, computadora, teléfono). ' +
-      'Conecta el dispositivo automáticamente. Mantenlo privado: quien lo tenga puede ver y cambiar tus tareas.</p>' +
-      '<p><a href="' + esc_(link) + '" target="_blank" style="font-size:16px">Abrir el panel y conectar este dispositivo</a></p>' +
-      '<p>Para conectar otro dispositivo, copia el enlace:</p>'
-    : '<p><b>Open this link on each device you want to connect</b> (iPad, laptop, phone). ' +
-      'It pairs the device automatically. Keep it private: anyone with it can see and change your tasks.</p>' +
-      '<p><a href="' + esc_(link) + '" target="_blank" style="font-size:16px">Open dashboard and pair this device</a></p>' +
-      '<p>To pair another device, copy the link:</p>';
-  var tail = es
-    ? 'App en la pantalla de inicio del iPad: el icono tiene su propio almacenamiento. Abre primero el enlace en Safari, luego agrégalo a la pantalla de inicio, ' +
-      'y pega la URL y la clave con el engranaje (Clave: ' + esc_(key) + ').'
-    : 'iPad Home Screen app: a Home Screen icon has its own storage, so open the link in Safari first, ' +
-      'then add to Home Screen, then paste the URL and key under the gear icon (Key: ' + esc_(key) + ').';
+  var T = es ? {
+    scan: 'Escanea este código con la cámara del iPad o del teléfono',
+    scan2: 'Apunta la cámara al código y toca el aviso que aparece. El panel se conecta solo.',
+    noqr: 'No se pudo mostrar el código QR. Usa el enlace de abajo.',
+    open: 'Abrir el panel en este dispositivo',
+    copy: 'O copia el enlace para enviarlo a otro dispositivo:',
+    priv: 'Este código y este enlace dan acceso a tus tareas. Muéstralos solo a quien deba usar el panel.',
+    ipad: 'App en la pantalla de inicio del iPad: el icono tiene su propio almacenamiento. Conecta primero en Safari; para el icono, abre la app, toca el engranaje y pega la URL y la clave (Clave: '
+  } : {
+    scan: 'Scan this code with the iPad or phone camera',
+    scan2: 'Point the camera at the code and tap the banner that appears. The dashboard connects by itself.',
+    noqr: 'The QR code could not be shown. Use the link below.',
+    open: 'Open the dashboard on this device',
+    copy: 'Or copy the link to send to another device:',
+    priv: 'This code and link give access to your tasks. Only show them to people who should use the dashboard.',
+    ipad: 'iPad Home Screen app: a Home Screen icon has its own storage. Pair in Safari first; for the icon, open the app, tap the gear and paste the URL and key (Key: '
+  };
   var html = HtmlService.createHtmlOutput(
-    '<div style="font:14px Arial,sans-serif;line-height:1.5">' + body +
-    '<textarea readonly onclick="this.select()" style="width:100%;height:110px;font:12px monospace">' + esc_(link) + '</textarea>' +
-    '<p style="color:#666;font-size:12px">' + tail + '</p>' +
-    '</div>').setWidth(560).setHeight(420);
+    '<div style="font:16px Arial,sans-serif;line-height:1.45;text-align:center">' +
+    '<p style="font-size:20px;margin:4px 0"><b>' + T.scan + '</b></p>' +
+    '<p style="margin:4px 0 10px">' + T.scan2 + '</p>' +
+    '<div id="qr" style="display:inline-block;background:#fff;padding:14px;border:1px solid #ccc;border-radius:8px"></div>' +
+    '<p id="qrmsg" style="color:#b00020;margin:6px 0"></p>' +
+    '<p style="margin:10px 0"><a href="' + esc_(link) + '" target="_blank" style="font-size:16px">' + T.open + '</a></p>' +
+    '<p style="margin:6px 0;text-align:left;font-size:13px">' + T.copy + '</p>' +
+    '<textarea readonly onclick="this.select()" style="width:100%;height:70px;font:12px monospace">' + esc_(link) + '</textarea>' +
+    '<p style="color:#b00020;font-size:13px;text-align:left;margin:8px 0">' + T.priv + '</p>' +
+    '<p style="color:#666;font-size:12px;text-align:left;margin:4px 0">' + T.ipad + esc_(key) + ').</p>' +
+    '</div>' +
+    // The QR is drawn here in the browser by a small open-source library; the link is never sent anywhere.
+    '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>' +
+    '<script>(function(){var L=' + JSON.stringify(link).replace(/</g, '\\u003c') + ';' +
+    'try{new QRCode(document.getElementById("qr"),{text:L,width:300,height:300,correctLevel:QRCode.CorrectLevel.L});}' +
+    'catch(e){document.getElementById("qr").style.display="none";document.getElementById("qrmsg").textContent=' + JSON.stringify(T.noqr) + ';}})();</script>'
+  ).setWidth(520).setHeight(780);
   ui.showModalDialog(html, es ? 'Conexión del panel' : 'Dashboard connection');
 }
 

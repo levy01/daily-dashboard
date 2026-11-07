@@ -30,7 +30,9 @@ Replace `index.html` in your repo with the new one and add `sw.js` next to it. C
 (Your Pages address is `https://levy01.github.io/daily-dashboard/`.)
 
 ## 4. Pair each device
-- **Easiest:** click the pairing link in the "Show connection info" window (or copy it to the device and open it).
+- **Easiest:** "Show connection info" shows a **QR code**. Point the iPad or phone camera at it and tap the banner
+  that appears: the dashboard opens already connected. (The code is drawn in your browser; the link is never sent
+  to any QR service.) You can also click the link under the code, or copy it to the device and open it.
   The page saves the connection and removes it from the address bar. Treat the link like a password.
 - **iPad Home Screen app:** a Home Screen icon has its own storage, so after adding it, open it and tap the
   gear, paste the API URL and key, **Save & sync**. Do this once.

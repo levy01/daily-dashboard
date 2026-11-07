@@ -22,8 +22,9 @@ y se conecta a tu hoja con un enlace personal.
 1. Vuelve a la hoja y **recarga la página**. Aparece el menú **Dashboard**.
 2. **Dashboard > Usar español**. Esto pone el panel, las noticias y el menú en español.
 3. **Dashboard > Show connection info** (o "Mostrar datos de conexión" tras recargar). Pega la URL del paso 3.
-4. Verás un **enlace de conexión**. Ábrelo en cada dispositivo (iPad, computadora, teléfono): queda conectado solo.
-   Mantén ese enlace en privado, porque da acceso a tus tareas.
+4. Verás un **código QR**. En el iPad o el teléfono, abre la **cámara**, apúntala al código y toca el aviso que
+   aparece: el panel se abre ya conectado. (Si no ves el código, usa el enlace que aparece debajo.)
+   Mantén el código y el enlace en privado, porque dan acceso a tus tareas.
 5. **Dashboard > Probar noticias** y acepta el permiso adicional para ver las noticias.
 
 ## Uso diario
