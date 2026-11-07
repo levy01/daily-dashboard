@@ -52,6 +52,20 @@ inside the app so stray swipes can't exit it.
 - **Settings tab:** section names (up to 4), clock color, 12/24h, stopwatch delay, weather coordinates and units,
   night-dim hours, nightly reload time. Changes reach every device within a minute.
 
+## Sections, timer, forecast and news
+- **Sections:** tap the pencil, then tap a column title to rename it (its tasks follow). **+ Section** adds one
+  (max 4); the X in a column header removes an empty one.
+- **Timer:** footer switch > **Timer**. Pomodoro / Short Break / Long Break presets. When one finishes it beeps and
+  selects the next (a Long Break after every 4th Pomodoro); tap Start to begin it. Lengths come from the
+  Settings tab: `pomodoro_min`, `short_min`, `long_min`.
+- **Forecast:** tap the weather in the footer for the 5-day outlook.
+- **News:** tap the date. Topics come from the Settings tab row `news_topics` (comma separated, up to 6, e.g.
+  `finance,health,sports,business,education`). Headlines come from Google News through your script and are
+  cached for 30 minutes.
+- **Upgrading from an older version:** paste the new `Code.gs`, then **Deploy > Manage deployments > edit > New version**.
+  The first time, Google asks you to approve a new permission (the script now contacts news.google.com).
+  Run **Dashboard > Set up / repair** once to add the new Settings rows (optional; defaults apply without them).
+
 ## Troubleshooting
 - Status line says **wrong key**: re-copy the key from Dashboard > Show connection info (gear > paste).
 - Says **bad response** or never syncs: the deployment is probably "Only me" or an old version. Re-check step 2.

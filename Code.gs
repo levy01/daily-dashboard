@@ -34,7 +34,11 @@ var DEFAULTS = [
   ['unit', 'fahrenheit'],                 // or celsius
   ['dim_start', '22:00'],
   ['dim_end', '06:00'],
-  ['reload_at', '03:00']                  // nightly page refresh on the kiosk
+  ['reload_at', '03:00'],                 // nightly page refresh on the kiosk
+  ['pomodoro_min', '25'],                 // timer presets, minutes
+  ['short_min', '5'],
+  ['long_min', '15'],
+  ['news_topics', 'finance,health,sports,business,education']   // comma separated, up to 6
 ];
 
 var ID_RE = /^[a-z0-9]{6,24}$/;
@@ -107,6 +111,7 @@ function doGet(e) {
   return respond_(function () {
     var p = (e && e.parameter) || {};
     auth_(p.key);
+    if (p.action === 'news') return newsOut_();
     return run_(null, p.today);
   });
 }
@@ -179,6 +184,11 @@ function applyOps_(rows, ops, settings, today, dirty) {
     var id = String(op.id || '');
     if (!ID_RE.test(id)) return;
 
+    if (op.op === 'secRename' || op.op === 'secAdd' || op.op === 'secDel') {
+      sectionOp_(op, rows, settings, dirty);
+      return;
+    }
+
     if (op.op === 'add') {
       if (id in index) return;                          // idempotent: retries never duplicate
       var text = cleanText_(op.text, MAX_TEXT);
@@ -209,6 +219,81 @@ function applyOps_(rows, ops, settings, today, dirty) {
     r[COL.UPDATED] = stamp_();
     dirty[i] = true;
   });
+}
+
+// Rename / add / remove a section. Rename also re-labels every task row in that section.
+function sectionOp_(op, rows, settings, dirty) {
+  var s = settings.sections.slice();
+  function find(n) {
+    for (var j = 0; j < s.length; j++) if (s[j].toLowerCase() === n.toLowerCase()) return j;
+    return -1;
+  }
+  if (op.op === 'secRename') {
+    var from = cleanSection_(op.from), to = cleanSection_(op.to);
+    if (!from || !to) return;
+    var k = find(from), dup = find(to);
+    if (dup >= 0 && dup !== k) return;                  // name already used by another section
+    if (k >= 0) s[k] = to; else if (s.length < 4) s.push(to);
+    rows.forEach(function (r, i) {
+      if (r[COL.SECTION].toLowerCase() === from.toLowerCase()) { r[COL.SECTION] = to; r[COL.UPDATED] = stamp_(); dirty[i] = true; }
+    });
+  } else if (op.op === 'secAdd') {
+    var name = cleanSection_(op.name);
+    if (!name || find(name) >= 0 || s.length >= 4) return;
+    s.push(name);
+  } else {
+    var del = find(cleanSection_(op.name));
+    if (del < 0 || s.length <= 1) return;
+    s.splice(del, 1);
+  }
+  settings.sections = s;
+  writeSetting_('sections', s.join(','));
+}
+
+function cleanSection_(v) { return cleanText_(String(v || '').replace(/,/g, ' '), MAX_SECTION); }
+
+function writeSetting_(key, value) {
+  var st = ss_().getSheetByName(TAB_SETTINGS), n = st.getLastRow();
+  if (n >= 2) {
+    var keys = st.getRange(2, 1, n - 1, 1).getValues();
+    for (var i = 0; i < keys.length; i++) {
+      if (String(keys[i][0]).trim() === key) { st.getRange(i + 2, 2).setValue(value); return; }
+    }
+  }
+  st.getRange(n + 1, 1, 1, 2).setValues([[key, value]]);
+}
+
+// ---------------------------------------------------------------- news (Google News RSS, no key needed)
+
+function newsOut_() {
+  var settings = readSettings_(ss_());
+  var cache = CacheService.getScriptCache();
+  var topics = settings.news_topics.map(function (topic) {
+    var ck = 'news_' + topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 60);
+    var hit = cache.get(ck);
+    if (hit) { try { return JSON.parse(hit); } catch (e) { /* refetch */ } }
+    var res = { topic: topic, items: fetchNews_(topic) };
+    if (res.items.length) { try { cache.put(ck, JSON.stringify(res), 1800); } catch (e) { /* too big: skip cache */ } }
+    return res;
+  });
+  return { ok: true, topics: topics };
+}
+
+function fetchNews_(topic) {
+  try {
+    var url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(topic + ' when:2d') + '&hl=en-US&gl=US&ceid=US:en';
+    var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+    if (resp.getResponseCode() !== 200) return [];
+    var channel = XmlService.parse(resp.getContentText()).getRootElement().getChild('channel');
+    if (!channel) return [];
+    return channel.getChildren('item').slice(0, 8).map(function (it) {
+      var title = it.getChildText('title') || '', src = it.getChildText('source') || '';
+      var tail = ' - ' + src;
+      if (src && title.slice(-tail.length) === tail) title = title.slice(0, -tail.length);
+      var t = Date.parse(it.getChildText('pubDate') || '');
+      return { title: cleanText_(title, 200), link: String(it.getChildText('link') || ''), source: cleanText_(src, 60), t: isNaN(t) ? 0 : t };
+    });
+  } catch (e) { return []; }
 }
 
 // Fill in anything missing on rows typed by hand in the sheet (ID, Section, Day) and fix duplicate IDs.
@@ -304,10 +389,15 @@ function readSettings_(ss) {
     unit: String(kv.unit).toLowerCase() === 'celsius' ? 'celsius' : 'fahrenheit',
     dim_start: kv.dim_start,
     dim_end: kv.dim_end,
-    reload_at: kv.reload_at
+    reload_at: kv.reload_at,
+    pomodoro_min: num_(kv.pomodoro_min, 25, 1, 180),
+    short_min: num_(kv.short_min, 5, 1, 180),
+    long_min: num_(kv.long_min, 15, 1, 180),
+    news_topics: String(kv.news_topics || '').split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; }).slice(0, 6)
   };
 }
 
+function num_(v, def, lo, hi) { var n = parseFloat(v); return isNaN(n) ? def : Math.min(hi, Math.max(lo, n)); }
 function newId_() { return Utilities.getUuid().replace(/-/g, '').slice(0, 12); }
 function newKey_() {
   return Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 16);

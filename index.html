@@ -106,6 +106,46 @@
   #modal .row button.danger { background: #4a1f1b; color: #ff9d94; margin-right: auto; margin-left: 0; }
   #modal .info { font-size: 13px; color: #6b6b70; margin-top: 12px; line-height: 1.5; }
 
+  /* ---------- timer ---------- */
+  #clock.tm-break { color: #2bff6e; text-shadow: 0 0 2.5vw rgba(43, 255, 110, 0.3); }
+  #tbar { display: none; flex-direction: column; align-items: center; margin-top: 1.4vw; }
+  body.tm #tbar { display: flex; }
+  #presets { display: flex; justify-content: center; margin-bottom: 1.4vw; }
+  #presets button { background: #1b1b1e; color: #9a9aa0; font-size: 3.6vw; padding: 1.4vw 3.2vw; border-radius: 1.6vw; margin: 0 0.8vw; }
+  #presets button.on { background: #34343a; color: #fff; }
+  #presets small { display: block; font-size: 0.7em; opacity: 0.7; }
+  #tcontrols { display: flex; justify-content: center; }
+  #tcontrols button { font-size: 5vw; font-weight: 600; padding: 1.8vw 5vw; border-radius: 2vw; margin: 0 1.2vw; min-width: 30vw; }
+  #tcontrols button:active { opacity: 0.7; }
+  #tMain { background: #1f9d6b; color: #fff; }
+  #tMain.stop { background: #c0392b; }
+  #tReset { background: #2a2a2e; color: #d0d0d4; }
+  #pomo { font-size: 3vw; color: #6b6b70; margin-top: 1vw; }
+
+  /* ---------- popups (forecast, news) + clickable footer ---------- */
+  #wx, #date { cursor: pointer; }
+  #pop { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.82); z-index: 30; align-items: center; justify-content: center; padding: 4vw; }
+  #pop.open { display: flex; }
+  #pop .box { background: #151518; border: 1px solid #2c2c31; border-radius: 16px; padding: 22px; width: 100%; max-width: 640px; max-height: 88%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  #pop h3 { font-size: 20px; margin-bottom: 14px; }
+  #pop .row { display: flex; justify-content: flex-end; margin-top: 16px; }
+  #pop .row button { padding: 12px 18px; border-radius: 10px; background: #26262b; color: #ddd; font-size: 16px; }
+  #pop .info { font-size: 14px; color: #8a8a8e; line-height: 1.5; padding: 6px 0; }
+  .fc-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #222; font-size: 18px; }
+  .fc-day { width: 100px; color: #aaa; }
+  .fc-ic { width: 50px; font-size: 26px; }
+  .fc-t { flex: 1 1 auto; }
+  .fc-t span { color: #8a8a8e; margin-left: 8px; }
+  .fc-p { color: #6fb7ff; width: 70px; text-align: right; font-size: 15px; }
+  .ntabs { display: flex; flex-wrap: wrap; margin-bottom: 8px; }
+  .ntabs button { background: #1b1b1e; color: #9a9aa0; padding: 8px 12px; border-radius: 10px; margin: 0 6px 6px 0; font-size: 14px; text-transform: capitalize; }
+  .ntabs button.on { background: #34343a; color: #fff; }
+  a.nitem { display: block; padding: 10px 0; border-bottom: 1px solid #222; color: #eee; text-decoration: none; font-size: 16px; line-height: 1.35; }
+  a.nitem small { display: block; color: #7a7a80; margin-top: 3px; font-size: 12px; }
+  .colhead h2 { -webkit-user-select: none; user-select: none; }
+  body.edit .colhead h2 { cursor: pointer; border-bottom: 1px dashed currentColor; }
+  .colhead .secdel { width: 36px; height: 36px; margin: 0 0 0 6px; }
+
   /* ---------- kiosk layout: tablet landscape / laptop ---------- */
   @media (min-width: 821px) {
     html, body { overflow: hidden; height: 100%; }
@@ -141,6 +181,11 @@
     #wx { font-size: 2.8vw; }
     #status { font-size: max(1.1vw, 11px); margin-top: 0.2vw; }
     #modeSwitch.wrap { display: block; }
+    #tbar { margin-top: 0.8vw; flex: 0 0 auto; }
+    #presets { margin-bottom: 0.8vw; }
+    #presets button { font-size: 1.9vw; padding: 0.7vw 1.8vw; border-radius: 1vw; margin: 0 0.5vw; }
+    #tcontrols button { font-size: 3vw; padding: 1.1vw 4.5vw; border-radius: 1.4vw; min-width: 21vw; }
+    #pomo { font-size: 1.5vw; margin-top: 0.5vw; }
   }
 </style>
 </head>
@@ -157,7 +202,17 @@
     <button id="btnReset" type="button" class="off">Reset</button>
   </div>
 
+  <div id="tbar">
+    <div id="presets"></div>
+    <div id="tcontrols">
+      <button id="tMain" type="button">Start</button>
+      <button id="tReset" type="button">Reset</button>
+    </div>
+    <div id="pomo"></div>
+  </div>
+
   <div id="editbar" class="edit-only">
+    <button id="btnAddSec" type="button">+ Section</button>
     <span>Add to</span>
     <button id="dayToday" type="button" data-day="today">Today</button>
     <button id="dayTomorrow" type="button" data-day="tomorrow">Tomorrow</button>
@@ -168,7 +223,7 @@
 
   <div id="foot">
     <div id="modeSwitch"><div class="pill">
-      <button id="modeClock" type="button" class="on">Clock</button><button id="modeSw" type="button">Stopwatch</button>
+      <button id="modeClock" type="button" class="on">Clock</button><button id="modeSw" type="button">Stopwatch</button><button id="modeTm" type="button">Timer</button>
     </div></div>
     <div id="date"></div>
     <div id="footR">
@@ -178,6 +233,14 @@
   </div>
 
   <div id="dim"></div>
+
+  <div id="pop">
+    <div class="box">
+      <h3 id="popTitle"></h3>
+      <div id="popBody"></div>
+      <div class="row"><button id="popClose" type="button">Close</button></div>
+    </div>
+  </div>
 
   <div id="modal">
     <div class="box">
@@ -219,7 +282,7 @@
   var DEFAULT_SETTINGS = {
     sections: ['Work', 'FinTech', 'Personal'], color: 'red', clock24h: false, countdown: 5,
     lat: 25.7617, lon: -80.1918, unit: 'fahrenheit', dim_start: '22:00', dim_end: '06:00',
-    reload_at: '03:00', evening_hour: 17
+    reload_at: '03:00', evening_hour: 17, pomodoro_min: 25, short_min: 5, long_min: 15, news_topics: []
   };
 
   function $(id) { return document.getElementById(id); }
@@ -301,6 +364,7 @@
       if (rem <= 0) { sw.state = 'running'; sw.start = sw.cdEnd; sw.acc = 0; sw.lastCd = -1; beep(1320, 0.6); syncButtons(); }
       else if (rem !== sw.lastCd) { sw.lastCd = rem; if (rem <= 3) beep(880, 0.15); }
     }
+    if (tm.state === 'running' && now >= tm.end) timerDone();
     if (mode === 'sw') {
       if (sw.state === 'countdown') {
         setDisp('' + Math.max(1, Math.ceil((sw.cdEnd - now) / 1000)), 'sw-cd');
@@ -309,6 +373,9 @@
         var t = pad(Math.floor(tot / 3600)) + ':' + pad(Math.floor(tot / 60) % 60) + ':' + pad(tot % 60);
         setDisp(t + '<span class="sub">.' + Math.floor((ms % 1000) / 100) + '</span>', sw.state === 'paused' ? 'sw-pause' : '');
       }
+    } else if (mode === 'timer') {
+      var tsec = Math.ceil((tm.state === 'idle' ? presetMs(tm.preset) : tmRemaining()) / 1000);
+      setDisp(pad(Math.floor(tsec / 60)) + ':' + pad(tsec % 60), tm.state === 'paused' ? 'sw-pause' : (tm.preset === 'pomo' ? '' : 'tm-break'));
     } else {
       var d = new Date(now), h = d.getHours(), suffix = '';
       if (!settings.clock24h) { suffix = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12; }
@@ -330,11 +397,14 @@
     $('btnReset').className = sw.state === 'idle' ? 'off' : '';
   }
 
+  function bodyCls() { return (mode === 'sw' ? 'sw ' : '') + (mode === 'timer' ? 'tm ' : '') + (editMode ? 'edit' : ''); }
   function setMode(m) {
     mode = m;
-    document.body.className = (m === 'sw' ? 'sw ' : '') + (editMode ? 'edit' : '');
+    document.body.className = bodyCls();
     $('modeClock').className = m === 'clock' ? 'on' : '';
     $('modeSw').className = m === 'sw' ? 'on' : '';
+    $('modeTm').className = m === 'timer' ? 'on' : '';
+    if (m === 'timer') timerButtons();
     lastDisp = ''; tick();
   }
 
@@ -353,6 +423,66 @@
   $('btnReset').addEventListener('click', function () { sw.state = 'idle'; sw.acc = 0; sw.lastCd = -1; syncButtons(); tick(); });
   $('modeClock').addEventListener('click', function () { setMode('clock'); });
   $('modeSw').addEventListener('click', function () { unlockAudio(); setMode('sw'); });
+  $('modeTm').addEventListener('click', function () { unlockAudio(); setMode('timer'); });
+
+  // =====================================================================
+  //  Countdown timer: Pomodoro / Short Break / Long Break
+  // =====================================================================
+  var PRESETS = {
+    pomo: { label: 'Pomodoro', key: 'pomodoro_min' },
+    short: { label: 'Short Break', key: 'short_min' },
+    long: { label: 'Long Break', key: 'long_min' }
+  };
+  var tm = { state: 'idle', preset: 'pomo', end: 0, rem: 0 };   // idle | running | paused
+  var pomo = jget('dash_pomo', { day: '', n: 0 });
+
+  function presetMs(p) {
+    var m = parseFloat(settings[PRESETS[p].key]);
+    if (!(m > 0)) m = DEFAULT_SETTINGS[PRESETS[p].key];
+    return Math.round(m * 60000);
+  }
+  function tmRemaining() { return tm.state === 'running' ? Math.max(0, tm.end - Date.now()) : tm.rem; }
+  function pomoCount() { if (pomo.day !== todayStr()) pomo = { day: todayStr(), n: 0 }; return pomo.n; }
+
+  function timerButtons() {
+    var html = '';
+    ['pomo', 'short', 'long'].forEach(function (p) {
+      html += '<button type="button" data-p="' + p + '"' + (tm.preset === p ? ' class="on"' : '') + '>' + PRESETS[p].label +
+        '<small>' + Math.round(presetMs(p) / 60000) + ' min</small></button>';
+    });
+    if ($('presets').getAttribute('data-sig') !== html) { $('presets').setAttribute('data-sig', html); $('presets').innerHTML = html; }
+    $('tMain').textContent = tm.state === 'running' ? 'Pause' : (tm.state === 'paused' ? 'Resume' : 'Start');
+    $('tMain').className = tm.state === 'running' ? 'stop' : '';
+    $('pomo').textContent = 'Pomodoros today: ' + pomoCount();
+    lastDisp = '';
+  }
+
+  function timerDone() {
+    tm.state = 'idle';
+    beep(880, 0.25); setTimeout(function () { beep(880, 0.25); }, 400); setTimeout(function () { beep(1320, 0.7); }, 800);
+    if (tm.preset === 'pomo') {
+      pomoCount(); pomo.n++; lsSet('dash_pomo', JSON.stringify(pomo));
+      tm.preset = (pomo.n % 4 === 0) ? 'long' : 'short';      // long break after every 4th pomodoro
+    } else tm.preset = 'pomo';
+    timerButtons();
+  }
+
+  $('tMain').addEventListener('click', function () {
+    unlockAudio();
+    var now = Date.now();
+    if (tm.state === 'idle') { tm.end = now + presetMs(tm.preset); tm.state = 'running'; }
+    else if (tm.state === 'running') { tm.rem = tmRemaining(); tm.state = 'paused'; }
+    else { tm.end = now + tm.rem; tm.state = 'running'; }
+    timerButtons(); tick();
+  });
+  $('tReset').addEventListener('click', function () { tm.state = 'idle'; timerButtons(); tick(); });
+  $('presets').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-p]') : null;
+    if (!b) return;
+    if (tm.state !== 'idle' && !window.confirm('Stop the current timer?')) return;
+    tm.preset = b.getAttribute('data-p'); tm.state = 'idle';
+    timerButtons(); tick();
+  });
 
   // =====================================================================
   //  Tasks: local view = last server copy + pending ops (optimistic)
@@ -377,13 +507,35 @@
   function viewTasks() {
     var map = {}, order = [];
     serverTasks.forEach(function (t) { map[t.id] = { id: t.id, section: t.section, text: t.text, day: t.day, done: t.done || '' }; order.push(t.id); });
-    queue.forEach(function (op) { applyOp(map, order, op); });
+    queue.forEach(function (op) {
+      if (op.op === 'secRename') {
+        for (var id in map) if (String(map[id].section).toLowerCase() === String(op.from).toLowerCase()) map[id].section = op.to;
+        return;
+      }
+      if (op.op === 'secAdd' || op.op === 'secDel') return;
+      applyOp(map, order, op);
+    });
     return order.filter(function (id) { return map[id]; }).map(function (id) { return map[id]; });
   }
 
+  // section names = server list + not-yet-synced rename/add/remove ops
+  function effSections() {
+    var s = settings.sections.slice();
+    function find(n) { for (var j = 0; j < s.length; j++) if (String(s[j]).toLowerCase() === String(n).toLowerCase()) return j; return -1; }
+    queue.forEach(function (op) {
+      var k;
+      if (op.op === 'secRename') { k = find(op.from); if (k >= 0) s[k] = op.to; }
+      else if (op.op === 'secAdd') { if (s.length < 4 && find(op.name) < 0) s.push(op.name); }
+      else if (op.op === 'secDel') { k = find(op.name); if (k >= 0 && s.length > 1) s.splice(k, 1); }
+    });
+    return s;
+  }
+
+  function cleanSection(v) { return String(v || '').replace(/,/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 30); }
+
   function sectionsFor(tasks) {
     var list = [], seen = {};
-    settings.sections.forEach(function (n) { var k = String(n).toLowerCase(); if (!seen[k]) { seen[k] = 1; list.push({ key: k, name: n }); } });
+    effSections().forEach(function (n) { var k = String(n).toLowerCase(); if (!seen[k]) { seen[k] = 1; list.push({ key: k, name: n }); } });
     tasks.forEach(function (t) { var k = String(t.section || '').toLowerCase(); if (k && !seen[k] && list.length < 4) { seen[k] = 1; list.push({ key: k, name: t.section }); } });
     return list.slice(0, 4);
   }
@@ -392,7 +544,8 @@
     var html = '';
     cols.forEach(function (c, i) {
       html += '<div class="col c' + i + '" data-key="' + esc(c.key) + '" data-name="' + esc(c.name) + '">' +
-        '<div class="colhead"><h2>' + esc(c.name) + '</h2><span class="cnt"></span></div>' +
+        '<div class="colhead"><h2>' + esc(c.name) + '</h2><span class="cnt"></span>' +
+        (cols.length > 1 ? '<span class="edit-only"><button class="tbtn del secdel" type="button" data-act="secdel" title="Remove section">&#10005;</button></span>' : '') + '</div>' +
         '<div class="tasks"></div>' +
         '<div class="addrow edit-only"><input type="text" maxlength="200" placeholder="Add to ' + esc(c.name) + '&hellip;" autocapitalize="sentences"><button type="button" data-act="add">Add</button></div>' +
         '</div>';
@@ -461,6 +614,9 @@
     var btn = e.target.closest ? e.target.closest('[data-act]') : null;
     var row = e.target.closest ? e.target.closest('.task') : null;
     if (btn && btn.getAttribute('data-act') === 'add') { addTask(btn.closest('.col')); return; }
+    if (btn && btn.getAttribute('data-act') === 'secdel') { removeSection(btn.closest('.col')); return; }
+    var head = e.target.closest ? e.target.closest('.colhead h2') : null;
+    if (head && editMode) { renameSection(head.closest('.col')); return; }
     if (!row) return;
     var id = row.getAttribute('data-id'), t = findTask(id);
     if (!t) return;
@@ -474,6 +630,35 @@
     if (row.className.indexOf('queued') >= 0) return;
     enqueue({ op: 'done', id: id, done: t.done ? '' : todayStr() });
   });
+  function sectionTaken(name, exceptKey) {
+    var k = name.toLowerCase(), s = effSections();
+    for (var i = 0; i < s.length; i++) if (s[i].toLowerCase() === k && k !== exceptKey) return true;
+    return false;
+  }
+  function renameSection(col) {
+    var old = col.getAttribute('data-name'), key = col.getAttribute('data-key');
+    var nn = window.prompt('Rename section "' + old + '" to:', old);
+    if (nn === null) return;
+    nn = cleanSection(nn);
+    if (!nn || nn === old) return;
+    if (sectionTaken(nn, key)) { window.alert('There is already a section called "' + nn + '".'); return; }
+    enqueue({ op: 'secRename', id: newId(), from: old, to: nn });
+  }
+  function removeSection(col) {
+    var name = col.getAttribute('data-name'), key = col.getAttribute('data-key'), n = 0;
+    viewTasks().forEach(function (t) { if (String(t.section || '').toLowerCase() === key) n++; });
+    if (n) { window.alert('"' + name + '" still has ' + n + ' task(s). Finish or delete them first (or just rename the section).'); return; }
+    if (window.confirm('Remove the empty section "' + name + '"?')) enqueue({ op: 'secDel', id: newId(), name: name });
+  }
+  $('btnAddSec').addEventListener('click', function () {
+    if (effSections().length >= 4) { window.alert('Four sections is the maximum.'); return; }
+    var nn = window.prompt('New section name (e.g. Fitness, Groceries):', '');
+    if (nn === null) return;
+    nn = cleanSection(nn);
+    if (!nn) return;
+    if (sectionTaken(nn, '')) { window.alert('There is already a section called "' + nn + '".'); return; }
+    enqueue({ op: 'secAdd', id: newId(), name: nn });
+  });
   listsEl.addEventListener('keydown', function (e) {
     if ((e.key === 'Enter' || e.keyCode === 13) && e.target.tagName === 'INPUT') addTask(e.target.closest('.col'));
   });
@@ -482,7 +667,7 @@
   function setEdit(on) {
     editMode = on;
     if (on) addDay = (new Date().getHours() >= settings.evening_hour) ? 'tomorrow' : 'today';
-    document.body.className = (mode === 'sw' ? 'sw ' : '') + (editMode ? 'edit' : '');
+    document.body.className = bodyCls();
     $('btnEdit').className = on ? 'on' : '';
     $('dayToday').className = addDay === 'today' ? 'on' : '';
     $('dayTomorrow').className = addDay === 'tomorrow' ? 'on' : '';
@@ -601,7 +786,7 @@
   }
   function loadWeather() {
     var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + settings.lat + '&longitude=' + settings.lon +
-      '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&temperature_unit=' + settings.unit + '&timezone=auto&forecast_days=1';
+      '&current=temperature_2m,weather_code,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=' + settings.unit + '&timezone=auto&forecast_days=5';
     var xhr = new XMLHttpRequest();
     try { xhr.open('GET', url, true); } catch (e) { return; }
     xhr.timeout = 15000;
@@ -614,6 +799,75 @@
   }
 
   // =====================================================================
+  //  Popups: 5-day forecast (tap weather) and top news (tap date)
+  // =====================================================================
+  function openPop(title, html) { $('popTitle').textContent = title; $('popBody').innerHTML = html; $('pop').className = 'open'; }
+  function closePop() { $('pop').className = ''; }
+  $('popClose').addEventListener('click', closePop);
+  $('pop').addEventListener('click', function (e) { if (e.target === $('pop')) closePop(); });
+
+  $('wx').addEventListener('click', function () {
+    var j = null; try { j = JSON.parse(lsGet('dash_wx') || 'null'); } catch (e) {}
+    if (!j || !j.daily || !j.daily.time) { openPop('Forecast', '<div class="info">Weather has not loaded yet.</div>'); return; }
+    var d = j.daily, html = '';
+    for (var i = 0; i < d.time.length; i++) {
+      var p = d.time[i].split('-'), dow = DAYS[new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay()];
+      var rain = d.precipitation_probability_max && d.precipitation_probability_max[i] !== null && d.precipitation_probability_max[i] !== undefined ? '&#128167; ' + d.precipitation_probability_max[i] + '%' : '';
+      html += '<div class="fc-row"><div class="fc-day">' + (i === 0 ? 'Today' : dow) + '</div><div class="fc-ic">' + wxIcon(d.weather_code ? d.weather_code[i] : 0, true) + '</div>' +
+        '<div class="fc-t">' + Math.round(d.temperature_2m_max[i]) + '°<span>' + Math.round(d.temperature_2m_min[i]) + '°</span></div><div class="fc-p">' + rain + '</div></div>';
+    }
+    openPop('Forecast', html);
+  });
+
+  var newsData = null, newsAt = 0, newsTab = 0;
+  function ago(t) {
+    if (!t) return '';
+    var m = Math.round((Date.now() - t) / 60000);
+    return m < 1 ? 'just now' : (m < 60 ? m + 'm ago' : (m < 1440 ? Math.round(m / 60) + 'h ago' : Math.round(m / 1440) + 'd ago'));
+  }
+  function renderNews(note) {
+    var topics = (newsData && newsData.topics) || [];
+    if (!topics.length) { openPop('Top news', '<div class="info">No topics set. Add a <b>news_topics</b> row (e.g. finance, health, sports) to the Settings tab.</div>'); return; }
+    if (newsTab >= topics.length) newsTab = 0;
+    var html = '<div class="ntabs">';
+    topics.forEach(function (t, i) { html += '<button type="button" data-tab="' + i + '"' + (i === newsTab ? ' class="on"' : '') + '>' + esc(t.topic) + '</button>'; });
+    html += '</div>';
+    var items = topics[newsTab].items || [];
+    if (!items.length) html += '<div class="info">No stories found right now.</div>';
+    items.forEach(function (it) {
+      if (!/^https?:\/\//i.test(it.link || '')) return;
+      html += '<a class="nitem" target="_blank" rel="noopener" href="' + esc(it.link) + '">' + esc(it.title) + '<small>' + esc(it.source || '') + (it.t ? ' &middot; ' + ago(it.t) : '') + '</small></a>';
+    });
+    if (note) html += '<div class="info">' + esc(note) + '</div>';
+    openPop('Top news', html);
+  }
+  $('popBody').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-tab]') : null;
+    if (b && newsData) { newsTab = +b.getAttribute('data-tab'); renderNews(''); }
+  });
+  $('date').addEventListener('click', function () {
+    if (!cfg.api || !cfg.key) { openPop('Top news', '<div class="info">Connect this device first (gear icon).</div>'); return; }
+    if (newsData && Date.now() - newsAt < 10 * 60000) { renderNews(''); return; }
+    openPop('Top news', '<div class="info">Loading&hellip;</div>');
+    var xhr = new XMLHttpRequest();
+    try { xhr.open('GET', cfg.api + (cfg.api.indexOf('?') < 0 ? '?' : '&') + 'key=' + encodeURIComponent(cfg.key) + '&action=news&_=' + Date.now(), true); }
+    catch (e) { openPop('Top news', '<div class="info">Bad API URL.</div>'); return; }
+    xhr.timeout = 30000;
+    xhr.onload = function () {
+      var j = null; try { j = JSON.parse(xhr.responseText); } catch (e) {}
+      if (j && j.ok && j.topics) { newsData = j; newsAt = Date.now(); lsSet('dash_news', JSON.stringify(j)); renderNews(''); }
+      else if (j && j.ok) openPop('Top news', '<div class="info">The Apps Script is an old version. Paste the new Code.gs and redeploy a new version.</div>');
+      else openPop('Top news', '<div class="info">Could not load news (' + esc((j && j.error) || 'bad response') + ').</div>');
+    };
+    xhr.onerror = xhr.ontimeout = function () {
+      var old = jget('dash_news', null);
+      if (old && old.topics) { newsData = old; renderNews('Offline: showing the last saved headlines.'); }
+      else openPop('Top news', '<div class="info">Offline. Try again when you are connected.</div>');
+    };
+    xhr.send();
+  });
+
+  // =====================================================================
   //  Kiosk housekeeping: night dim, nightly reload, wake-up sync
   // =====================================================================
   function hm(s) { var p = String(s || '').split(':'); return (+p[0]) * 60 + (+p[1] || 0); }
@@ -622,7 +876,7 @@
     var dim = (!isNaN(a) && !isNaN(b) && a !== b) ? (a < b ? (m >= a && m < b) : (m >= a || m < b)) : false;
     $('dim').className = dim ? 'on' : '';
     var r = hm(settings.reload_at);
-    if (!isNaN(r) && m === r && lsGet('dash_reload') !== todayStr() && sw.state === 'idle' && !editMode) {
+    if (!isNaN(r) && m === r && lsGet('dash_reload') !== todayStr() && sw.state === 'idle' && tm.state === 'idle' && !editMode) {
       lsSet('dash_reload', todayStr());
       window.location.reload();
     }
