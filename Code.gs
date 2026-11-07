@@ -26,7 +26,7 @@ var HEADERS = ['ID', 'Section', 'Task', 'Day', 'Done', 'Updated', 'Deleted'];
 var COL = { ID: 0, SECTION: 1, TEXT: 2, DAY: 3, DONE: 4, UPDATED: 5, DELETED: 6 };
 
 var DEFAULTS = [
-  ['sections', 'Work,FinTech,Personal'],  // up to 4, in column order
+  ['sections', 'Work,FinTech,Personal'],  // up to 5, in column order
   ['timezone', 'America/New_York'],
   ['evening_hour', '17'],                 // tasks added at/after this hour default to TOMORROW
   ['color', 'red'],                       // red, green, cyan, amber, purple, white
@@ -50,6 +50,7 @@ var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 var MAX_OPS = 50;
 var MAX_TEXT = 200;
 var MAX_SECTION = 30;
+var MAX_SECTIONS = 5;                   // columns
 
 // ---------------------------------------------------------------- menu + setup
 
@@ -305,13 +306,13 @@ function sectionOp_(op, rows, settings, dirty) {
     if (!from || !to) return;
     var k = find(from), dup = find(to);
     if (dup >= 0 && dup !== k) return;                  // name already used by another section
-    if (k >= 0) s[k] = to; else if (s.length < 4) s.push(to);
+    if (k >= 0) s[k] = to; else if (s.length < MAX_SECTIONS) s.push(to);
     rows.forEach(function (r, i) {
       if (r[COL.SECTION].toLowerCase() === from.toLowerCase()) { r[COL.SECTION] = to; r[COL.UPDATED] = stamp_(); dirty[i] = true; }
     });
   } else if (op.op === 'secAdd') {
     var name = cleanSection_(op.name);
-    if (!name || find(name) >= 0 || s.length >= 4) return;
+    if (!name || find(name) >= 0 || s.length >= MAX_SECTIONS) return;
     s.push(name);
   } else {
     var del = find(cleanSection_(op.name));
@@ -461,7 +462,7 @@ function readSettings_(ss) {
       kv[k] = String(v === null || v === undefined ? '' : v).trim();
     });
   }
-  var sections = kv.sections.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; }).slice(0, 4);
+  var sections = kv.sections.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; }).slice(0, MAX_SECTIONS);
   if (!sections.length) sections = ['Tasks'];
   var eve = parseInt(kv.evening_hour, 10);
   var cd = parseInt(kv.countdown, 10);

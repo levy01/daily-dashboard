@@ -28,7 +28,8 @@ y se conecta a tu hoja con un enlace personal.
 
 ## Uso diario
 - **Tocar una tarea** la marca como hecha. Las pendientes pasan al día siguiente con una etiqueta de color.
-- **Lápiz:** agregar y editar tareas. Toca el nombre de una columna para cambiarlo. **+ Sección** agrega otra (máximo 4).
+- **Lápiz:** agregar y editar tareas. Toca el nombre de una columna para cambiarlo. **+ Sección** agrega otra (máximo 5, por ejemplo de lunes a viernes).
+- **Pantalla encendida:** mientras el cronómetro o el temporizador están corriendo, la pantalla no se apaga (en iPhone/iPad con iOS 16.4 o más reciente).
 - **Reloj / Cronómetro / Temporizador:** el temporizador trae Pomodoro 25 min, Descanso corto 5 min y Descanso largo 15 min.
 - **Tocar el clima:** pronóstico de 5 días. **Tocar la fecha:** noticias principales de tus temas.
 - **Pestaña Settings de la hoja:** color del reloj, formato de 24 horas (`clock24h` = yes), ubicación del clima

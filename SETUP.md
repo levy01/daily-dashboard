@@ -52,12 +52,12 @@ inside the app so stray swipes can't exit it.
   on each task edit or delete it.
 - **Typing straight into the Sheet** works too: just fill in Section and Task on the Tasks tab. ID, Day and
   Updated are filled in on the next sync. Don't reorder the header row.
-- **Settings tab:** section names (up to 4), clock color, 12/24h, stopwatch delay, weather coordinates and units,
+- **Settings tab:** section names (up to 5), clock color, 12/24h, stopwatch delay, weather coordinates and units,
   night-dim hours, nightly reload time. Changes reach every device within a minute.
 
 ## Sections, timer, forecast and news
 - **Sections:** tap the pencil, then tap a column title to rename it (its tasks follow). **+ Section** adds one
-  (max 4); the X in a column header removes an empty one.
+  (max 5); the X in a column header removes an empty one.
 - **Timer:** footer switch > **Timer**. Pomodoro / Short Break / Long Break presets. When one finishes it beeps and
   selects the next (a Long Break after every 4th Pomodoro); tap Start to begin it. Lengths come from the
   Settings tab: `pomodoro_min`, `short_min`, `long_min`.
@@ -68,6 +68,10 @@ inside the app so stray swipes can't exit it.
 - **Upgrading from an older version:** paste the new `Code.gs`, then **Deploy > Manage deployments > edit > New version**.
   The first time, Google asks you to approve a new permission (the script now contacts news.google.com).
   Run **Dashboard > Set up / repair** once to add the new Settings rows (optional; defaults apply without them).
+
+- **Screen stays awake while timing:** while the stopwatch or timer is running, the page asks the device not to
+  dim or lock the screen (iOS / iPadOS 16.4+ and Android Chrome). It lets go when you pause, reset or the timer ends.
+  On older iPads this is not available, so use Settings > Display & Brightness > Auto-Lock > Never.
 
 ## Troubleshooting
 - Status line says **wrong key**: re-copy the key from Dashboard > Show connection info (gear > paste).

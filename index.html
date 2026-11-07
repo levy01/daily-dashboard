@@ -51,7 +51,7 @@
   /* ---------- task columns ---------- */
   #lists { margin-top: 3vw; border-top: 1px solid #2a2a2e; padding-top: 2.4vw; }
   .col { --accent: #4da3ff; display: flex; flex-direction: column; min-width: 0; margin-bottom: 6vw; }
-  .c1 { --accent: #3ddc97; } .c2 { --accent: #ffb84d; } .c3 { --accent: #c792ea; }
+  .c1 { --accent: #3ddc97; } .c2 { --accent: #ffb84d; } .c3 { --accent: #c792ea; } .c4 { --accent: #ff7a9c; }
   .colhead { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.4vw; }
   .colhead h2 { font-size: 4vw; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--accent); }
   .cnt { font-size: 3.2vw; color: #6b6b70; white-space: nowrap; }
@@ -306,7 +306,7 @@
       pomodoro: 'Pomodoro', short_break: 'Short Break', long_break: 'Long Break', min_n: '{0} min', pomo_today: 'Pomodoros today: {0}', stop_timer: 'Stop the current timer?',
       rename_prompt: 'Rename section "{0}" to:', dup: 'There is already a section called "{0}".',
       rm_nonempty: '"{0}" still has {1} task(s). Finish or delete them first (or just rename the section).',
-      rm_confirm: 'Remove the empty section "{0}"?', max4: 'Four sections is the maximum.', new_prompt: 'New section name (e.g. Fitness, Groceries):', rm_title: 'Remove section',
+      rm_confirm: 'Remove the empty section "{0}"?', max_sec: 'Five sections is the maximum.', new_prompt: 'New section name (e.g. Fitness, Groceries):', rm_title: 'Remove section',
       forecast: 'Forecast', wx_loading: 'Weather has not loaded yet.',
       news: 'Top news', no_topics: 'No topics set. Add a <b>news_topics</b> row (e.g. finance, health, sports) to the Settings tab.',
       no_stories: 'No stories found right now.', news_err: 'News feed error: {0}. In the Sheet, run Dashboard > Test news feed.',
@@ -332,7 +332,7 @@
       pomodoro: 'Pomodoro', short_break: 'Descanso corto', long_break: 'Descanso largo', min_n: '{0} min', pomo_today: 'Pomodoros hoy: {0}', stop_timer: '¿Detener el temporizador actual?',
       rename_prompt: 'Cambiar el nombre de la sección "{0}" a:', dup: 'Ya existe una sección llamada "{0}".',
       rm_nonempty: '"{0}" todavía tiene {1} tarea(s). Termínalas o bórralas primero (o solo cambia el nombre de la sección).',
-      rm_confirm: '¿Quitar la sección vacía "{0}"?', max4: 'El máximo es de cuatro secciones.', new_prompt: 'Nombre de la nueva sección (p. ej. Ejercicio, Compras):', rm_title: 'Quitar sección',
+      rm_confirm: '¿Quitar la sección vacía "{0}"?', max_sec: 'El máximo es de cinco secciones.', new_prompt: 'Nombre de la nueva sección (p. ej. Ejercicio, Compras):', rm_title: 'Quitar sección',
       forecast: 'Pronóstico', wx_loading: 'El clima aún no se ha cargado.',
       news: 'Noticias principales', no_topics: 'No hay temas. Agrega una fila <b>news_topics</b> (p. ej. finanzas, salud, deportes) en la pestaña Settings.',
       no_stories: 'No se encontraron noticias por ahora.', news_err: 'Error del canal de noticias: {0}. En la hoja, ejecuta Dashboard > Probar noticias.',
@@ -342,6 +342,7 @@
       just_now: 'ahora', m_ago: 'hace {0} min', h_ago: 'hace {0} h', d_ago: 'hace {0} d'
     }
   };
+  var MAX_SECTIONS = 5;   // columns (Mon-Fri fits)
   var LANG = 'en';
   function tr(k) {
     var r = (STR[LANG] && STR[LANG][k] !== undefined) ? STR[LANG][k] : (STR.en[k] !== undefined ? STR.en[k] : k);
@@ -456,6 +457,27 @@
     var dd = new Date(now);
     var ds = dateStr(dd);
     if (ds !== lastDate) { lastDate = ds; dateEl.textContent = ds; }
+    updateWake();
+  }
+
+  // Keep the screen awake while the stopwatch or timer is running (Screen Wake Lock API: iOS/iPadOS 16.4+, Android Chrome).
+  // The browser drops the lock when the page is hidden; the next tick takes it again when you come back.
+  var wakeLock = null, wakePending = false;
+  function wantAwake() { return sw.state === 'countdown' || sw.state === 'running' || tm.state === 'running'; }
+  function updateWake() {
+    if (!('wakeLock' in navigator)) return;
+    if (wantAwake()) {
+      if (wakeLock || wakePending || document.hidden) return;
+      wakePending = true;
+      navigator.wakeLock.request('screen').then(function (l) {
+        wakePending = false; wakeLock = l;
+        l.addEventListener('release', function () { if (wakeLock === l) wakeLock = null; });
+        if (!wantAwake()) { try { l.release(); } catch (e) {} wakeLock = null; }
+      }).catch(function () { wakePending = false; });
+    } else if (wakeLock) {
+      try { wakeLock.release(); } catch (e) {}
+      wakeLock = null;
+    }
   }
 
   function syncButtons() {
@@ -597,7 +619,7 @@
     queue.forEach(function (op) {
       var k;
       if (op.op === 'secRename') { k = find(op.from); if (k >= 0) s[k] = op.to; }
-      else if (op.op === 'secAdd') { if (s.length < 4 && find(op.name) < 0) s.push(op.name); }
+      else if (op.op === 'secAdd') { if (s.length < MAX_SECTIONS && find(op.name) < 0) s.push(op.name); }
       else if (op.op === 'secDel') { k = find(op.name); if (k >= 0 && s.length > 1) s.splice(k, 1); }
     });
     return s;
@@ -608,8 +630,8 @@
   function sectionsFor(tasks) {
     var list = [], seen = {};
     effSections().forEach(function (n) { var k = String(n).toLowerCase(); if (!seen[k]) { seen[k] = 1; list.push({ key: k, name: n }); } });
-    tasks.forEach(function (t) { var k = String(t.section || '').toLowerCase(); if (k && !seen[k] && list.length < 4) { seen[k] = 1; list.push({ key: k, name: t.section }); } });
-    return list.slice(0, 4);
+    tasks.forEach(function (t) { var k = String(t.section || '').toLowerCase(); if (k && !seen[k] && list.length < MAX_SECTIONS) { seen[k] = 1; list.push({ key: k, name: t.section }); } });
+    return list.slice(0, MAX_SECTIONS);
   }
 
   function buildColumns(cols) {
@@ -723,7 +745,7 @@
     if (window.confirm(tr('rm_confirm', name))) enqueue({ op: 'secDel', id: newId(), name: name });
   }
   $('btnAddSec').addEventListener('click', function () {
-    if (effSections().length >= 4) { window.alert(tr('max4')); return; }
+    if (effSections().length >= MAX_SECTIONS) { window.alert(tr('max_sec')); return; }
     var nn = window.prompt(tr('new_prompt'), '');
     if (nn === null) return;
     nn = cleanSection(nn);
