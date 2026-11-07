@@ -177,115 +177,39 @@
           </button>
         </div>
       </div>
-    </section>
 
-    <!-- Task & Dashboard Settings Modal -->
-    <div id="taskModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-        <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-          <h3 class="font-bold text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-sliders text-indigo-400"></i> Settings & Customizations
-          </h3>
-          <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
+      <!-- MODE 2-5: COUNTDOWN / STOPWATCH TIMER DISPLAY -->
+      <div id="timerDisplaySection" class="hidden flex-col items-center justify-center space-y-4 w-full">
         
-        <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          <!-- 1. Clock Color Customization -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Landing Clock Color Theme</label>
-            <div class="grid grid-cols-6 gap-2">
-              <button onclick="setClockColor('red')" id="colorBtn-red" class="h-9 rounded-lg border-2 border-slate-700 bg-[#ff3b30] flex items-center justify-center text-white transition hover:scale-105">
-                <i id="check-red" class="fa-solid fa-check text-xs"></i>
-              </button>
-              <button onclick="setClockColor('green')" id="colorBtn-green" class="h-9 rounded-lg border-2 border-slate-700 bg-[#22c55e] flex items-center justify-center text-white transition hover:scale-105">
-                <i id="check-green" class="fa-solid fa-check text-xs hidden"></i>
-              </button>
-              <button onclick="setClockColor('cyan')" id="colorBtn-cyan" class="h-9 rounded-lg border-2 border-slate-700 bg-[#06b6d4] flex items-center justify-center text-white transition hover:scale-105">
-                <i id="check-cyan" class="fa-solid fa-check text-xs hidden"></i>
-              </button>
-              <button onclick="setClockColor('amber')" id="colorBtn-amber" class="h-9 rounded-lg border-2 border-slate-700 bg-[#f59e0b] flex items-center justify-center text-white transition hover:scale-105">
-                <i id="check-amber" class="fa-solid fa-check text-xs hidden"></i>
-              </button>
-              <button onclick="setClockColor('purple')" id="colorBtn-purple" class="h-9 rounded-lg border-2 border-slate-700 bg-[#a855f7] flex items-center justify-center text-white transition hover:scale-105">
-                <i id="check-purple" class="fa-solid fa-check text-xs hidden"></i>
-              </button>
-              <button onclick="setClockColor('white')" id="colorBtn-white" class="h-9 rounded-lg border-2 border-slate-700 bg-[#f8fafc] flex items-center justify-center text-slate-900 transition hover:scale-105">
-                <i id="check-white" class="fa-solid fa-check text-xs hidden"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- 2. News Preference Selector -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Date Click News Preference</label>
-            <select id="newsCategorySelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-              <option value="Finance">Finance & Markets</option>
-              <option value="Tech">Tech & Innovation</option>
-              <option value="International">Global / International</option>
-              <option value="Business">Business & Economy</option>
-              <option value="Healthcare">Healthcare & Science</option>
-              <option value="Energy">Energy & Climate</option>
-            </select>
-          </div>
-
-          <!-- 3. Time Format Selector -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Time Format</label>
-            <div class="flex items-center space-x-2 bg-slate-950 border border-slate-800 p-1 rounded-lg">
-              <button onclick="setTimeFormat(true)" id="btnFormat12" class="flex-1 py-1 rounded text-xs font-bold bg-indigo-600 text-white">12-Hour (AM/PM)</button>
-              <button onclick="setTimeFormat(false)" id="btnFormat24" class="flex-1 py-1 rounded text-xs font-bold text-slate-400">24-Hour</button>
-            </div>
-          </div>
-
-          <!-- 4. Secondary Time Zone Settings -->
-          <div class="pt-2 border-t border-slate-800 space-y-3">
-            <div class="flex items-center justify-between">
-              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Secondary World Clock</label>
-              <input type="checkbox" id="dualClockToggle" onchange="toggleDualClockSetting(this.checked)" class="w-4 h-4 rounded border-slate-700 bg-slate-950 text-indigo-500 focus:ring-indigo-500">
-            </div>
-
-            <div id="dualClockConfigGroup" class="hidden space-y-2 pl-2 border-l-2 border-indigo-500/40">
-              <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Time Zone</label>
-                <select id="secondaryTimezoneSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-                  <option value="UTC">UTC / GMT (Coordinated Universal Time)</option>
-                  <option value="Europe/London">London (GMT / BST)</option>
-                  <option value="Europe/Paris">Frankfurt / Paris (CET / CEST)</option>
-                  <option value="America/New_York">New York / Miami (EST / EDT)</option>
-                  <option value="America/Chicago">Chicago (CST / CDT)</option>
-                  <option value="America/Los_Angeles">San Francisco / LA (PST / PDT)</option>
-                  <option value="Asia/Tokyo">Tokyo (JST)</option>
-                  <option value="Asia/Singapore">Singapore (SGT)</option>
-                  <option value="Australia/Sydney">Sydney (AEST / AEDT)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Clock Label</label>
-                <input type="text" id="secondaryClockLabelInput" placeholder="e.g. London Office" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
-              </div>
-            </div>
-          </div>
-
-          <!-- 5. Gist URL & PAT settings -->
-          <div class="pt-2 border-t border-slate-800 space-y-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Raw Gist JSON URL</label>
-              <input type="url" id="gistUrlInput" placeholder="https://gist.githubusercontent.com/..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-600 font-mono">
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">GitHub PAT <span class="text-indigo-400 text-[10px] font-normal">(2-way sync)</span></label>
-              <input type="password" id="githubPatInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-600 font-mono">
-            </div>
-          </div>
+        <!-- Countdown Get-Ready Banner -->
+        <div id="countdownBanner" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-400 px-5 py-1 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse">
+          GET READY: <span id="countdownSecs">5</span>s
         </div>
 
-        <div class="p-4 bg-slate-950/60 border-t border-slate-800 flex justify-end space-x-2">
-          <button onclick="closeTaskModal()" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white">Cancel</button>
-          <button onclick="saveGistSettings()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg text-xs transition">Save Settings</button>
+        <!-- Stopwatch Digits -->
+        <div id="stopwatchDigits" class="digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-green tracking-tight leading-none">
+          00:00.0
+        </div>
+
+        <!-- Stopwatch Control Buttons -->
+        <div class="flex items-center space-x-3 pt-1">
+          <button id="btnStartWithDelay" onclick="startWithDelay()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition shadow-lg flex items-center space-x-1.5">
+            <i class="fa-solid fa-hourglass-start text-[11px]"></i>
+            <span>5s Delay Start</span>
+          </button>
+          
+          <button id="btnToggleTimer" onclick="toggleTimer()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow">
+            <i id="iconToggleTimer" class="fa-solid fa-play text-[11px]"></i>
+            <span id="textToggleTimer">Start</span>
+          </button>
+
+          <button onclick="resetTimer()" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 font-bold px-3 py-2 rounded-xl text-xs transition">
+            <i class="fa-solid fa-rotate-left text-[11px]"></i>
+          </button>
         </div>
       </div>
-    </div>
+
+    </section>
 
     <!-- Bottom Half: Grouped To-Do Lists (Always 3 Columns Side-by-Side for Landscape Mode) -->
     <div class="grid grid-cols-3 gap-4 flex-1 min-h-0 pt-1">
@@ -455,6 +379,7 @@
     let currentMode = 'clock'; // clock, workout, pomodoro, shortbreak, longbreak
     let clockColor = localStorage.getItem('clockColor') || 'red';
     let is12Hour = localStorage.getItem('is12Hour') !== 'false';
+    let themeMode = localStorage.getItem('themeMode') || 'dark'; // 'auto', 'light', 'dark'
     let newsCategory = localStorage.getItem('newsCategory') || 'Finance';
     let isDualClockEnabled = localStorage.getItem('isDualClockEnabled') === 'true';
     let secondaryTimezone = localStorage.getItem('secondaryTimezone') || 'Europe/London';
@@ -469,6 +394,148 @@
       purple: 'digital-led-purple',
       white: 'digital-led-white'
     };
+
+    // Theme Switcher Handler
+    function setThemeMode(mode) {
+      themeMode = mode;
+      localStorage.setItem('themeMode', mode);
+      applyThemeMode();
+      initSettingsUI();
+    }
+
+    function applyThemeMode() {
+      const root = document.documentElement;
+      let effectiveTheme = themeMode;
+
+      if (themeMode === 'auto') {
+        effectiveTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+      }
+
+      if (effectiveTheme === 'light') {
+        root.classList.remove('dark');
+        document.body.className = "h-full flex flex-col justify-between overflow-hidden bg-slate-100 text-slate-900 font-sans antialiased no-select transition-colors duration-300";
+      } else {
+        root.classList.add('dark');
+        document.body.className = "h-full flex flex-col justify-between overflow-hidden bg-[#060913] text-slate-100 font-sans antialiased no-select transition-colors duration-300";
+      }
+    }
+
+    // Listen to system color scheme changes if in 'auto' mode
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+      if (themeMode === 'auto') applyThemeMode();
+    });
+
+    // Modal Control Functions for Settings & Tasks
+    function openTaskModal() {
+      initSettingsUI();
+      if (id('taskModal')) id('taskModal').classList.remove('hidden');
+    }
+
+    function closeTaskModal() {
+      if (id('taskModal')) id('taskModal').classList.add('hidden');
+    }
+
+    // Setting Handlers
+    function setClockColor(color) {
+      clockColor = color;
+      localStorage.setItem('clockColor', color);
+      
+      const clockDigits = id('clockDigits');
+      if (clockDigits) {
+        clockDigits.className = `digital-font ${COLOR_CLASSES[color] || 'digital-led-red'} text-7xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none`;
+      }
+      initSettingsUI();
+    }
+
+    function setTimeFormat(use12) {
+      is12Hour = use12;
+      localStorage.setItem('is12Hour', use12);
+      initSettingsUI();
+      updateClock();
+    }
+
+    function toggleDualClockSetting(enabled) {
+      isDualClockEnabled = enabled;
+      localStorage.setItem('isDualClockEnabled', enabled);
+      initSettingsUI();
+      updateClock();
+    }
+
+    function saveGistSettings() {
+      const url = id('gistUrlInput') ? id('gistUrlInput').value.trim() : '';
+      const pat = id('githubPatInput') ? id('githubPatInput').value.trim() : '';
+      const category = id('newsCategorySelect') ? id('newsCategorySelect').value : 'Finance';
+      const secTz = id('secondaryTimezoneSelect') ? id('secondaryTimezoneSelect').value : 'Europe/London';
+      const secLabel = id('secondaryClockLabelInput') ? id('secondaryClockLabelInput').value.trim() : 'LONDON (GMT)';
+
+      savedGistUrl = url;
+      savedGithubPat = pat;
+      newsCategory = category;
+      secondaryTimezone = secTz;
+      secondaryClockLabel = secLabel || 'SECONDARY';
+
+      localStorage.setItem('gistTasksUrl', url);
+      localStorage.setItem('githubPat', pat);
+      localStorage.setItem('newsCategory', category);
+      localStorage.setItem('secondaryTimezone', secTz);
+      localStorage.setItem('secondaryClockLabel', secondaryClockLabel);
+
+      closeTaskModal();
+      updateClock();
+      loadTasksFromUrl(true);
+    }
+
+    // Mode Selector Handler
+    function setMode(mode) {
+      currentMode = mode;
+      
+      ['Clock', 'Workout', 'Pomodoro', 'Shortbreak', 'Longbreak'].forEach(m => {
+        const btn = id(`btnMode${m}`);
+        if (btn) {
+          if (m.toLowerCase() === mode) {
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 bg-indigo-600/30 text-indigo-300 shadow';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 text-slate-400 hover:text-slate-200';
+          }
+        }
+      });
+
+      const secClock = id('clockDisplaySection');
+      const secTimer = id('timerDisplaySection');
+      const stopwatchDigits = id('stopwatchDigits');
+
+      // Configure preset durations for countdown timer modes
+      if (mode === 'workout') {
+        timerDurationMs = 0; // Continuous count up timer
+        if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-green tracking-tight leading-none';
+      } else if (mode === 'pomodoro') {
+        timerDurationMs = 25 * 60 * 1000; // 25 mins
+        if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-terracotta tracking-tight leading-none';
+      } else if (mode === 'shortbreak') {
+        timerDurationMs = 5 * 60 * 1000; // 5 mins
+        if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-cyan tracking-tight leading-none';
+      } else if (mode === 'longbreak') {
+        timerDurationMs = 15 * 60 * 1000; // 15 mins
+        if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-blue tracking-tight leading-none';
+      }
+
+      if (mode === 'clock') {
+        if (secClock) { secClock.classList.remove('hidden'); secClock.classList.add('flex'); }
+        if (secTimer) { secTimer.classList.remove('flex'); secTimer.classList.add('hidden'); }
+      } else {
+        if (secClock) { secClock.classList.remove('flex'); secClock.classList.add('hidden'); }
+        if (secTimer) { secTimer.classList.remove('hidden'); secTimer.classList.add('flex'); }
+        resetTimer();
+      }
+    }
+
+    function toggleTimer() {
+      if (isTimerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
 
     // Initialize Settings UI inside Modal
     function initSettingsUI() {
@@ -498,6 +565,18 @@
         }
       }
 
+      // Set Theme Mode Buttons
+      ['Auto', 'Light', 'Dark'].forEach(t => {
+        const btn = id(`btnTheme${t}`);
+        if (btn) {
+          if (t.toLowerCase() === themeMode) {
+            btn.className = 'flex-1 py-1 rounded text-xs font-bold bg-indigo-600 text-white';
+          } else {
+            btn.className = 'flex-1 py-1 rounded text-xs font-bold text-slate-400 hover:text-slate-200';
+          }
+        }
+      });
+
       // Dual Clock settings init
       const toggle = id('dualClockToggle');
       const configGroup = id('dualClockConfigGroup');
@@ -510,50 +589,10 @@
       if (labelInput) labelInput.value = secondaryClockLabel;
     }
 
-    function toggleDualClockSetting(enabled) {
-      isDualClockEnabled = enabled;
-      localStorage.setItem('isDualClockEnabled', enabled);
-      initSettingsUI();
-      updateClock();
-    }
+    // Apply initial theme on startup
+    applyThemeMode();
 
-    function saveGistSettings() {
-      savedGistUrl = id('gistUrlInput').value.trim();
-      savedGithubPat = id('githubPatInput').value.trim();
-
-      const catSelect = id('newsCategorySelect');
-      if (catSelect) {
-        newsCategory = catSelect.value;
-        localStorage.setItem('newsCategory', newsCategory);
-      }
-
-      // Dual Clock settings save
-      const toggle = id('dualClockToggle');
-      const tzSelect = id('secondaryTimezoneSelect');
-      const labelInput = id('secondaryClockLabelInput');
-
-      if (toggle) {
-        isDualClockEnabled = toggle.checked;
-        localStorage.setItem('isDualClockEnabled', isDualClockEnabled);
-      }
-      if (tzSelect) {
-        secondaryTimezone = tzSelect.value;
-        localStorage.setItem('secondaryTimezone', secondaryTimezone);
-      }
-      if (labelInput && labelInput.value.trim()) {
-        secondaryClockLabel = labelInput.value.trim();
-        localStorage.setItem('secondaryClockLabel', secondaryClockLabel);
-      }
-
-      localStorage.setItem('gistTasksUrl', savedGistUrl);
-      localStorage.setItem('githubPat', savedGithubPat);
-
-      closeTaskModal();
-      updateClock();
-      loadTasksFromUrl(true);
-    }
-
-    // Main Digital Wall Clock Update Routine (Local + 2nd Time Zone)
+    // Wall Clock Update Function
     function updateClock() {
       const now = new Date();
       
@@ -619,7 +658,14 @@
     setInterval(updateClock, 1000);
     updateClock();
 
-    // Timer Logic Functions
+    // Timer Logic Variables & Functions
+    let timerInterval = null;
+    let timerStartTime = 0;
+    let timerElapsedTime = 0;
+    let timerDurationMs = 0;
+    let isTimerRunning = false;
+    let countdownInterval = null;
+
     function startTimer() {
       if (isTimerRunning) return;
       isTimerRunning = true;
