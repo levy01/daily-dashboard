@@ -833,7 +833,7 @@
     topics.forEach(function (t, i) { html += '<button type="button" data-tab="' + i + '"' + (i === newsTab ? ' class="on"' : '') + '>' + esc(t.topic) + '</button>'; });
     html += '</div>';
     var items = topics[newsTab].items || [];
-    if (!items.length) html += '<div class="info">No stories found right now.</div>';
+    if (!items.length) html += '<div class="info">' + (topics[newsTab].err ? 'News feed error: ' + esc(topics[newsTab].err) + '. In the Sheet, run Dashboard &gt; Test news feed.' : 'No stories found right now.') + '</div>';
     items.forEach(function (it) {
       if (!/^https?:\/\//i.test(it.link || '')) return;
       html += '<a class="nitem" target="_blank" rel="noopener" href="' + esc(it.link) + '">' + esc(it.title) + '<small>' + esc(it.source || '') + (it.t ? ' &middot; ' + ago(it.t) : '') + '</small></a>';

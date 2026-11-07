@@ -54,6 +54,7 @@ function onOpen() {
     .addItem('Set up / repair this sheet', 'setup')
     .addItem('Show connection info', 'showInfo')
     .addItem('Rotate secret key', 'rotateKey')
+    .addItem('Test news feed', 'testNews')
     .addToUi();
 }
 
@@ -272,7 +273,9 @@ function newsOut_() {
     var ck = 'news_' + topic.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 60);
     var hit = cache.get(ck);
     if (hit) { try { return JSON.parse(hit); } catch (e) { /* refetch */ } }
-    var res = { topic: topic, items: fetchNews_(topic) };
+    var f = fetchNews_(topic);
+    var res = { topic: topic, items: f.items };
+    if (f.err) { res.err = f.err; return res; }          // never cache failures
     if (res.items.length) { try { cache.put(ck, JSON.stringify(res), 1800); } catch (e) { /* too big: skip cache */ } }
     return res;
   });
@@ -283,17 +286,27 @@ function fetchNews_(topic) {
   try {
     var url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(topic + ' when:2d') + '&hl=en-US&gl=US&ceid=US:en';
     var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
-    if (resp.getResponseCode() !== 200) return [];
+    if (resp.getResponseCode() !== 200) return { items: [], err: 'HTTP ' + resp.getResponseCode() };
     var channel = XmlService.parse(resp.getContentText()).getRootElement().getChild('channel');
-    if (!channel) return [];
-    return channel.getChildren('item').slice(0, 8).map(function (it) {
+    if (!channel) return { items: [], err: 'no channel in feed' };
+    var items = channel.getChildren('item').slice(0, 8).map(function (it) {
       var title = it.getChildText('title') || '', src = it.getChildText('source') || '';
       var tail = ' - ' + src;
       if (src && title.slice(-tail.length) === tail) title = title.slice(0, -tail.length);
       var t = Date.parse(it.getChildText('pubDate') || '');
       return { title: cleanText_(title, 200), link: String(it.getChildText('link') || ''), source: cleanText_(src, 60), t: isNaN(t) ? 0 : t };
     });
-  } catch (e) { return []; }
+    return { items: items };
+  } catch (e) { return { items: [], err: cleanText_((e && e.message) || e, 160) }; }
+}
+
+// Run once from the editor (or Dashboard > Test news feed) to grant the "connect to external service" permission.
+function testNews() {
+  var r = fetchNews_('finance');
+  var msg = r.err ? 'FAILED: ' + r.err : 'OK: ' + r.items.length + ' stories. First: ' + (r.items[0] ? r.items[0].title : '-');
+  try { SpreadsheetApp.getUi().alert('News feed test', msg, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) { /* run from editor: see log */ }
+  Logger.log(msg);
+  return msg;
 }
 
 // Fill in anything missing on rows typed by hand in the sheet (ID, Section, Day) and fix duplicate IDs.
