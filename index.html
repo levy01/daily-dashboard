@@ -464,8 +464,8 @@
       </div>
 
       <div class="p-4 bg-slate-950/60 border-t border-slate-800 flex justify-end space-x-2">
-        <button onclick="closeTaskModal()" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">Cancel</button>
-        <button onclick="saveGistSettings()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2 rounded-lg text-xs transition">Save Settings</button>
+        <button type="button" onclick="closeTaskModal()" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">Cancel</button>
+        <button type="button" id="btnSaveGistSettings" onclick="saveGistSettings()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2 rounded-lg text-xs transition cursor-pointer">Save Settings</button>
       </div>
     </div>
   </div>
@@ -618,38 +618,49 @@
     }
 
     function saveGistSettings() {
-      const url = id('gistUrlInput') ? id('gistUrlInput').value.trim() : '';
-      const pat = id('githubPatInput') ? id('githubPatInput').value.trim() : '';
-      const category = id('newsCategorySelect') ? id('newsCategorySelect').value : 'Finance';
-      const secTz = id('secondaryTimezoneSelect') ? id('secondaryTimezoneSelect').value : 'Europe/London';
-      const secLabel = id('secondaryClockLabelInput') ? id('secondaryClockLabelInput').value.trim() : 'LONDON (GMT)';
+      try {
+        const urlInput = id('gistUrlInput');
+        const patInput = id('githubPatInput');
+        const catSelect = id('newsCategorySelect');
+        const secTzSelect = id('secondaryTimezoneSelect');
+        const secLabelInput = id('secondaryClockLabelInput');
 
-      // Save custom section names
-      ['Work', 'FinTech', 'Personal'].forEach(secKey => {
-        const inputVal = id(`sectionNameInput-${secKey}`) ? id(`sectionNameInput-${secKey}`).value.trim() : '';
-        if (inputVal) {
-          sectionNames[secKey] = inputVal;
-          localStorage.setItem(`sectionName_${secKey}`, inputVal);
-        }
-      });
+        const url = urlInput ? urlInput.value.trim() : '';
+        const pat = patInput ? patInput.value.trim() : '';
+        const category = catSelect ? catSelect.value : 'Finance';
+        const secTz = secTzSelect ? secTzSelect.value : 'Europe/London';
+        const secLabel = secLabelInput ? secLabelInput.value.trim() : 'LONDON (GMT)';
 
-      savedGistUrl = url;
-      savedGithubPat = pat;
-      newsCategory = category;
-      secondaryTimezone = secTz;
-      secondaryClockLabel = secLabel || 'SECONDARY';
+        // Save custom section names with fallback checks
+        ['Work', 'FinTech', 'Personal'].forEach(secKey => {
+          const inputEl = id(`sectionNameInput-${secKey}`);
+          const inputVal = inputEl ? inputEl.value.trim() : '';
+          if (inputVal) {
+            sectionNames[secKey] = inputVal;
+            localStorage.setItem(`sectionName_${secKey}`, inputVal);
+          }
+        });
 
-      localStorage.setItem('gistTasksUrl', url);
-      localStorage.setItem('githubPat', pat);
-      localStorage.setItem('newsCategory', category);
-      localStorage.setItem('secondaryTimezone', secTz);
-      localStorage.setItem('secondaryClockLabel', secondaryClockLabel);
+        savedGistUrl = url;
+        savedGithubPat = pat;
+        newsCategory = category;
+        secondaryTimezone = secTz;
+        secondaryClockLabel = secLabel || 'SECONDARY';
 
-      updateSectionTitlesUI();
-      closeTaskModal();
-      updateClock();
-      syncStateToGist();
-      loadTasksFromUrl(true);
+        localStorage.setItem('gistTasksUrl', url);
+        localStorage.setItem('githubPat', pat);
+        localStorage.setItem('newsCategory', category);
+        localStorage.setItem('secondaryTimezone', secTz);
+        localStorage.setItem('secondaryClockLabel', secondaryClockLabel);
+
+        updateSectionTitlesUI();
+        closeTaskModal();
+        updateClock();
+        syncStateToGist();
+        loadTasksFromUrl(true);
+      } catch (err) {
+        console.error('Error in saveGistSettings:', err);
+      }
     }
 
     // Mode Selector Handler
@@ -1325,6 +1336,17 @@
     // Auto-sync polling every 60 seconds
     setInterval(() => loadTasksFromUrl(false), 60000);
     loadTasksFromUrl(false);
+
+    // Explicit touch event binding for iOS / iPad Safari touch responsiveness
+    document.addEventListener('DOMContentLoaded', () => {
+      const saveBtn = id('btnSaveGistSettings');
+      if (saveBtn) {
+        saveBtn.addEventListener('touchend', (e) => {
+          e.preventDefault();
+          saveGistSettings();
+        });
+      }
+    });
   </script>
 </body>
 </html>
