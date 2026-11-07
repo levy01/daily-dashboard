@@ -219,7 +219,7 @@
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 shrink-0">
           <div class="flex items-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-            <h3 class="font-bold text-slate-200 tracking-wide text-xs uppercase">Work</h3>
+            <h3 id="headerTitle-Work" class="font-bold text-slate-200 tracking-wide text-xs uppercase">Work</h3>
           </div>
           <span id="count-Work" class="text-xs bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono font-bold">0/0</span>
         </div>
@@ -237,7 +237,7 @@
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 shrink-0">
           <div class="flex items-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <h3 class="font-bold text-slate-200 tracking-wide text-xs uppercase">FinTech</h3>
+            <h3 id="headerTitle-FinTech" class="font-bold text-slate-200 tracking-wide text-xs uppercase">FinTech</h3>
           </div>
           <span id="count-FinTech" class="text-xs bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono font-bold">0/0</span>
         </div>
@@ -255,7 +255,7 @@
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 shrink-0">
           <div class="flex items-center space-x-2">
             <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-            <h3 class="font-bold text-slate-200 tracking-wide text-xs uppercase">Personal</h3>
+            <h3 id="headerTitle-Personal" class="font-bold text-slate-200 tracking-wide text-xs uppercase">Personal</h3>
           </div>
           <span id="count-Personal" class="text-xs bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono font-bold">0/0</span>
         </div>
@@ -391,14 +391,13 @@
         <!-- 2-Column Grid: World Clock & News Industry Settings -->
         <div class="grid grid-cols-2 gap-3 border-t border-slate-800 pt-3">
           <!-- Column 1: World Clock Settings -->
-        <!-- Secondary Timezone Settings -->
-        <div class="space-y-2 border-t border-slate-800 pt-3">
-          <div class="flex items-center justify-between">
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Enable World Clock</label>
-            <input type="checkbox" id="dualClockToggle" onchange="toggleDualClockSetting(this.checked)" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500">
-          </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Enable World Clock</label>
+              <input type="checkbox" id="dualClockToggle" onchange="toggleDualClockSetting(this.checked)" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500">
+            </div>
 
-          <div id="dualClockConfigGroup" class="space-y-2 pl-2 border-l-2 border-indigo-500/40 hidden">
+            <div id="dualClockConfigGroup" class="space-y-2 pl-2 border-l-2 border-indigo-500/40 hidden">
               <div>
                 <label class="block text-[11px] font-medium text-slate-400 mb-1">Timezone</label>
                 <select id="secondaryTimezoneSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
@@ -429,6 +428,25 @@
               <option value="Healthcare">Healthcare & Science</option>
               <option value="Energy">Energy & Climate</option>
             </select>
+          </div>
+        </div>
+
+        <!-- Section Renaming Options -->
+        <div class="border-t border-slate-800 pt-3 space-y-2">
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Task Column Titles</label>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-500 block mb-1">Section 1</span>
+              <input type="text" id="sectionNameInput-Work" placeholder="Work" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-500 block mb-1">Section 2</span>
+              <input type="text" id="sectionNameInput-FinTech" placeholder="FinTech" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-500 block mb-1">Section 3</span>
+              <input type="text" id="sectionNameInput-Personal" placeholder="Personal" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+            </div>
           </div>
         </div>
 
@@ -491,6 +509,31 @@
     let isDualClockEnabled = localStorage.getItem('isDualClockEnabled') === 'true';
     let secondaryTimezone = localStorage.getItem('secondaryTimezone') || 'Europe/London';
     let secondaryClockLabel = localStorage.getItem('secondaryClockLabel') || 'LONDON (GMT)';
+
+    // Section Custom Names (Local + Synced)
+    let sectionNames = {
+      Work: localStorage.getItem('sectionName_Work') || 'Work',
+      FinTech: localStorage.getItem('sectionName_FinTech') || 'FinTech',
+      Personal: localStorage.getItem('sectionName_Personal') || 'Personal'
+    };
+
+    function updateSectionTitlesUI() {
+      ['Work', 'FinTech', 'Personal'].forEach(secKey => {
+        const titleName = sectionNames[secKey] || secKey;
+        
+        // Update Column Headers
+        const headerEl = id(`headerTitle-${secKey}`);
+        if (headerEl) headerEl.textContent = titleName;
+        
+        // Update Input Placeholders
+        const inputEl = id(`input-${secKey}`);
+        if (inputEl) inputEl.placeholder = `+ Add ${titleName} task...`;
+        
+        // Update Settings Inputs
+        const settingInput = id(`sectionNameInput-${secKey}`);
+        if (settingInput && document.activeElement !== settingInput) settingInput.value = titleName;
+      });
+    }
 
     // Color Theme Map
     const COLOR_CLASSES = {
@@ -581,6 +624,15 @@
       const secTz = id('secondaryTimezoneSelect') ? id('secondaryTimezoneSelect').value : 'Europe/London';
       const secLabel = id('secondaryClockLabelInput') ? id('secondaryClockLabelInput').value.trim() : 'LONDON (GMT)';
 
+      // Save custom section names
+      ['Work', 'FinTech', 'Personal'].forEach(secKey => {
+        const inputVal = id(`sectionNameInput-${secKey}`) ? id(`sectionNameInput-${secKey}`).value.trim() : '';
+        if (inputVal) {
+          sectionNames[secKey] = inputVal;
+          localStorage.setItem(`sectionName_${secKey}`, inputVal);
+        }
+      });
+
       savedGistUrl = url;
       savedGithubPat = pat;
       newsCategory = category;
@@ -593,8 +645,10 @@
       localStorage.setItem('secondaryTimezone', secTz);
       localStorage.setItem('secondaryClockLabel', secondaryClockLabel);
 
+      updateSectionTitlesUI();
       closeTaskModal();
       updateClock();
+      syncStateToGist();
       loadTasksFromUrl(true);
     }
 
@@ -664,6 +718,12 @@
       // Set category select
       const catSelect = id('newsCategorySelect');
       if (catSelect) catSelect.value = newsCategory;
+
+      // Set section custom title inputs
+      ['Work', 'FinTech', 'Personal'].forEach(secKey => {
+        const input = id(`sectionNameInput-${secKey}`);
+        if (input) input.value = sectionNames[secKey] || secKey;
+      });
 
       // Set format buttons
       const btn12 = id('btnFormat12');
@@ -995,47 +1055,47 @@
           { symbol: "AMZN", val: "$207.80", change: "-0.40%", positive: false }
         ],
         items: [
-          { tag: "HYBRID WORK", time: "40 mins ago", title: "Enterprise Desk Automation Boosts Hub Productivity Metrics", desc: "Organizations invest in smart desk kiosk integration and centralized workflow dashboards for hybrid teams." },
-          { tag: "VENTURE CAPITAL", time: "3 hours ago", title: "B2B SaaS Automation Capital Investments Rise 18% Year-Over-Year", desc: "Investor focus shifts heavily toward practical operational efficiency and automated resource planning tools." },
-          { tag: "SUPPLY CHAIN", time: "6 hours ago", title: "Real-Time Inventory Analytics Reduce Overhead Storage Costs", desc: "Predictive warehousing software and IoT tracking allow lean inventory strategies across retail networks." }
+          { tag: "STRATEGY / M&A", time: "40 mins ago", title: "Enterprise Software Leaders Expand Strategic Consolidation", desc: "Corporate development teams report increased activity across cloud-native analytics platforms." },
+          { tag: "SUPPLY CHAIN", time: "2 hours ago", title: "Automated Fulfillment Networks Reduce Last-Mile Operational Costs", desc: "Robotics and automated sorting algorithms drive margin expansion for major retail logistics." },
+          { tag: "WORKFORCE", time: "5 hours ago", title: "Hybrid Workplace Standards Drive Demand for Smart Workspace Displays", desc: "Organizations invest in real-time wall dashboards and digital scheduling kiosks." }
         ]
       },
       Healthcare: {
-        title: "Healthcare & Science Outlook",
+        title: "Healthcare & Science Briefing",
         subhead: "Biotech & Medical Advances",
         icon: "fa-heart-pulse",
         tickers: [
-          { symbol: "NBI (BIOTECH)", val: "4,480.20", change: "+1.12%", positive: true },
-          { symbol: "LLY", val: "$835.60", change: "+1.45%", positive: true },
-          { symbol: "JNJ", val: "$161.40", change: "-0.18%", positive: false }
+          { symbol: "NBI (BIOTECH)", val: "4,620.15", change: "+1.12%", positive: true },
+          { symbol: "LLY", val: "$912.40", change: "+1.45%", positive: true },
+          { symbol: "JNJ", val: "$161.30", change: "-0.18%", positive: false }
         ],
         items: [
-          { tag: "MEDTECH", time: "25 mins ago", title: "Wearable Clinical Monitors Achieve Multi-Metric Vital Tracking Approval", desc: "Wrist and chest hardware receive medical clearance for continuous cardiovascular and recovery metric tracking." },
-          { tag: "BIOTECH", time: "1 hour ago", title: "Targeted Cellular Repair Trials Show Strong Long-Term Efficacy", desc: "Phase III studies demonstrate positive cellular resilience metrics across chronic muscular conditions." },
-          { tag: "LONGEVITY", time: "4 hours ago", title: "Grip Strength and Dead-Hang Studies Correlate with Autonomic Health", desc: "Peer-reviewed research links regular isometric hanging routines directly to lower cardiovascular fatigue." }
+          { tag: "BIOTECH", time: "1 hour ago", title: "Next-Gen RNA Therapeutics Enter Phase III Clinical Trials", desc: "Targeted delivery platforms report promising efficacy and safety profiles across trial groups." },
+          { tag: "MEDTECH", time: "3 hours ago", title: "FDA Grants Accelerated Review for Continuous Health Diagnostics", desc: "Non-invasive sensor monitoring systems achieve high precision benchmarks for clinical usage." },
+          { tag: "RESEARCH", time: "6 hours ago", title: "Genomic Sequencing Costs Drop to New Industry Record Lows", desc: "Automated lab instruments accelerate personalized medicine timelines across major research hospitals." }
         ]
       },
       Energy: {
         title: "Energy & Climate Transition",
-        subhead: "Renewables & Grid Technology",
-        icon: "fa-leaf",
+        subhead: "Clean Tech & Energy Commodities",
+        icon: "fa-bolt-lightning",
         tickers: [
-          { symbol: "NAT GAS", val: "$2.72", change: "+2.10%", positive: true },
-          { symbol: "ICLN (CLEAN)", val: "$14.85", change: "+0.75%", positive: true },
-          { symbol: "TSLA", val: "$288.50", change: "-1.10%", positive: false }
+          { symbol: "NAT GAS", val: "$2.84", change: "+2.15%", positive: true },
+          { symbol: "ICLN", val: "$14.65", change: "+0.78%", positive: true },
+          { symbol: "TSLA", val: "$248.90", change: "+2.30%", positive: true }
         ],
         items: [
-          { tag: "GRID TECH", time: "10 mins ago", title: "Grid-Scale Energy Storage Systems Set Reliability Benchmark", desc: "Next-gen battery storage installations stabilize peak demand fluctuations while maintaining voltage consistency." },
-          { tag: "SOLAR ENERGY", time: "2 hours ago", title: "Commercial Photovoltaic Panels Achieve 32% Output Efficiency Record", desc: "Manufacturing innovations reduce per-watt production costs while enhancing durability against severe weather." },
-          { tag: "CLIMATE DATA", time: "5 hours ago", title: "Transparent Carbon Ledger System Gains Universal Auditing Support", desc: "Verifiable digital ledgers provide real-time tracking for enterprise environmental sustainability goals." }
+          { tag: "GRID TECH", time: "45 mins ago", title: "Battery Energy Storage Systems Reach Multi-Gigawatt Milestone", desc: "Utility-scale storage installations stabilize regional power grids during peak demand hours." },
+          { tag: "RENEWABLES", time: "2 hours ago", title: "Offshore Wind Turbines Achieve Record Capacity Factors", desc: "New turbine architectures improve energy yield per megawatt across North Sea installations." },
+          { tag: "CLEAN TECH", time: "4 hours ago", title: "Green Hydrogen Electrolyzer Production Capacity Doubles Q3", desc: "Manufacturing expansion lowers green fuel costs for heavy industrial manufacturing applications." }
         ]
       }
     };
 
     function openNewsModal() {
-      const selectedCategory = localStorage.getItem('newsCategory') || newsCategory || 'Finance';
-      const categoryData = NEWS_DATABASE[selectedCategory] || NEWS_DATABASE.Finance;
+      const categoryData = NEWS_DATABASE[newsCategory] || NEWS_DATABASE.Finance;
       
+      // Update Modal Header Title & Icon
       if (id('newsModalTitle')) id('newsModalTitle').textContent = categoryData.title;
       if (id('newsModalSubhead')) id('newsModalSubhead').textContent = categoryData.subhead;
       if (id('newsModalHeaderIcon')) id('newsModalHeaderIcon').className = `fa-solid ${categoryData.icon} text-indigo-400`;
@@ -1044,10 +1104,10 @@
       const tickerContainer = id('newsTickerContainer');
       if (tickerContainer && categoryData.tickers) {
         tickerContainer.innerHTML = categoryData.tickers.map(t => `
-          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-center">
-            <span class="text-[10px] font-bold text-slate-400 block truncate">${escapeHtml(t.symbol)}</span>
-            <span class="text-xs font-black text-slate-100 digital-font block">${escapeHtml(t.val)}</span>
-            <span class="text-[10px] font-bold ${t.positive ? 'text-emerald-400' : 'text-rose-400'}">${escapeHtml(t.change)}</span>
+          <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 text-center">
+            <span class="text-[10px] font-bold text-slate-400 block">${escapeHtml(t.symbol)}</span>
+            <span class="text-xs font-mono font-bold text-slate-100">${escapeHtml(t.val)}</span>
+            <span class="text-[10px] font-bold block ${t.positive ? 'text-emerald-400' : 'text-red-400'}">${escapeHtml(t.change)}</span>
           </div>
         `).join('');
       }
@@ -1127,6 +1187,17 @@
           }
         });
 
+        // Sync remote section names across devices if provided in Gist JSON
+        if (data.sectionNames && typeof data.sectionNames === 'object') {
+          ['Work', 'FinTech', 'Personal'].forEach(secKey => {
+            if (data.sectionNames[secKey]) {
+              sectionNames[secKey] = data.sectionNames[secKey];
+              localStorage.setItem(`sectionName_${secKey}`, data.sectionNames[secKey]);
+            }
+          });
+          updateSectionTitlesUI();
+        }
+
         renderTasks();
         if (showToast) alert('Tasks synced successfully!');
       } catch (err) {
@@ -1147,10 +1218,16 @@
         if (!match || !match[1]) return;
         const gistId = match[1];
 
+        // Include sectionNames payload in Gist writeback for multi-device parity
+        const payloadData = {
+          ...taskData,
+          sectionNames: sectionNames
+        };
+
         const payload = {
           files: {
             "tasks.json": {
-              content: JSON.stringify(taskData, null, 2)
+              content: JSON.stringify(payloadData, null, 2)
             }
           }
         };
@@ -1174,6 +1251,15 @@
       ['Work', 'FinTech', 'Personal'].forEach(sec => {
         const listEl = id(`list-${sec}`);
         const countEl = id(`count-${sec}`);
+        const inputEl = id(`input-${sec}`);
+        const headerTitleEl = id(`headerTitle-${sec}`);
+        
+        const customTitle = sectionNames[sec] || sec;
+
+        // Update header title & input placeholder dynamically
+        if (headerTitleEl) headerTitleEl.textContent = customTitle;
+        if (inputEl) inputEl.placeholder = `+ Add ${customTitle} task...`;
+
         if (!listEl) return;
 
         listEl.innerHTML = '';
