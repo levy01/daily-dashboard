@@ -1,5 +1,5 @@
 /**
- * Home Gym Dashboard - Google Apps Script backend.
+ * Daily Dashboard - Google Apps Script backend.
  *
  * Paste this into Extensions > Apps Script of the Google Sheet that holds your tasks
  * (a container-bound script), then follow SETUP.md.
@@ -90,8 +90,9 @@ function showInfo() {
     return;
   }
   ui.alert('Dashboard connection',
-    'API URL (should end in /exec):\n' + url + '\n\nKey:\n' + key +
-    '\n\nOne-tap pairing: open your dashboard address followed by\n#api=' + encodeURIComponent(url) + '&key=' + key,
+    'Key:\n' + key +
+    '\n\nAPI URL: do NOT use the address this menu reports; it can differ from the real deployment.' +
+    '\nCopy the Web app URL from Deploy > Manage deployments instead (ends in /exec), paste it in the dashboard gear screen with this key.',
     ui.ButtonSet.OK);
 }
 

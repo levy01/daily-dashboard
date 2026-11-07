@@ -15,7 +15,7 @@ and the dashboard page on GitHub Pages. The iPad, laptop and phone all talk to t
 1. In Apps Script: **Deploy > New deployment > Web app**.
 2. Execute as: **Me**. Who has access: **Anyone**. Deploy.
    (The URL is public but useless without your key.)
-3. Back in the Sheet: **Dashboard > Show connection info**. You'll see the **API URL** (ends in `/exec`)
+3. Back in the Sheet: **Dashboard > Show connection info**. You'll see the **key**. Get the **API URL** from Deploy > Manage deployments > Web app URL (ends in `/exec`); the menu's own URL can be wrong
    and the **Key**. Keep that window handy.
 
 When you later change `Code.gs`, redeploy with **Deploy > Manage deployments > edit > New version**,
@@ -23,10 +23,10 @@ otherwise the live URL keeps running the old code.
 
 ## 3. Put the page on GitHub Pages
 Replace `index.html` in your repo with the new one and add `sw.js` next to it. Commit and push.
-(Your Pages address is `https://levy01.github.io/home-gym-dashboard/`.)
+(Your Pages address is `https://levy01.github.io/daily-dashboard/`.)
 
 ## 4. Pair each device
-- **Easiest:** open `https://levy01.github.io/home-gym-dashboard/#api=<URL-encoded API URL>&key=<KEY>`
+- **Easiest:** open `https://levy01.github.io/daily-dashboard/#api=<URL-encoded API URL>&key=<KEY>`
   (the "Show connection info" window prints the exact `#api=...&key=...` part to append).
   The page saves it and removes it from the address bar.
 - **iPad Home Screen app:** a Home Screen icon has its own storage, so after adding it, open it and tap the
