@@ -388,44 +388,48 @@
           </div>
         </div>
 
+        <!-- 2-Column Grid: World Clock & News Industry Settings -->
+        <div class="grid grid-cols-2 gap-3 border-t border-slate-800 pt-3">
+          <!-- Column 1: World Clock Settings -->
         <!-- Secondary Timezone Settings -->
         <div class="space-y-2 border-t border-slate-800 pt-3">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Enable 2nd World Clock</label>
+            <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Enable World Clock</label>
             <input type="checkbox" id="dualClockToggle" onchange="toggleDualClockSetting(this.checked)" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500">
           </div>
 
           <div id="dualClockConfigGroup" class="space-y-2 pl-2 border-l-2 border-indigo-500/40 hidden">
-            <div>
-              <label class="block text-[11px] font-medium text-slate-400 mb-1">Select Timezone</label>
-              <select id="secondaryTimezoneSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-                <option value="UTC">UTC / GMT</option>
-                <option value="Europe/London">London (GMT/BST)</option>
-                <option value="America/New_York">New York (EST/EDT)</option>
-                <option value="America/Los_Angeles">San Francisco (PST/PDT)</option>
-                <option value="Europe/Berlin">Frankfurt (CET)</option>
-                <option value="Asia/Tokyo">Tokyo (JST)</option>
-                <option value="Australia/Sydney">Sydney (AEST)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[11px] font-medium text-slate-400 mb-1">Custom Label</label>
-              <input type="text" id="secondaryClockLabelInput" placeholder="LONDON (GMT)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 uppercase">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Timezone</label>
+                <select id="secondaryTimezoneSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+                  <option value="UTC">UTC / GMT</option>
+                  <option value="Europe/London">London (GMT/BST)</option>
+                  <option value="America/New_York">New York (EST/EDT)</option>
+                  <option value="America/Los_Angeles">San Francisco (PST/PDT)</option>
+                  <option value="Europe/Berlin">Frankfurt (CET)</option>
+                  <option value="Asia/Tokyo">Tokyo (JST)</option>
+                  <option value="Australia/Sydney">Sydney (AEST)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Custom Label</label>
+                <input type="text" id="secondaryClockLabelInput" placeholder="LONDON (GMT)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 uppercase">
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- News Category Preference -->
-        <div class="border-t border-slate-800 pt-3">
-          <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">News Briefing Industry</label>
-          <select id="newsCategorySelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-            <option value="Finance">Finance & Markets</option>
-            <option value="Tech">Tech & Innovation</option>
-            <option value="International">Global / International</option>
-            <option value="Business">Business & Strategy</option>
-            <option value="Healthcare">Healthcare & Science</option>
-            <option value="Energy">Energy & Climate</option>
-          </select>
+          <!-- Column 2: News Industry Preference -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">News Industry</label>
+            <select id="newsCategorySelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="Finance">Finance & Markets</option>
+              <option value="Tech">Tech & Innovation</option>
+              <option value="International">Global / International</option>
+              <option value="Business">Business & Strategy</option>
+              <option value="Healthcare">Healthcare & Science</option>
+              <option value="Energy">Energy & Climate</option>
+            </select>
+          </div>
         </div>
 
         <!-- Task Gist URL & PAT Input -->
@@ -940,6 +944,11 @@
         title: "Financial & Markets Briefing",
         subhead: "Top Financial & Macro Headlines",
         icon: "fa-chart-line",
+        tickers: [
+          { symbol: "S&P 500", val: "5,815.20", change: "+0.45%", positive: true },
+          { symbol: "NASDAQ", val: "18,518.60", change: "+0.68%", positive: true },
+          { symbol: "10Y TREASURY", val: "4.08%", change: "-0.03%", positive: false }
+        ],
         items: [
           { tag: "MARKETS / EQUITIES", time: "25 mins ago", title: "S&P 500 & Tech Indices Stabilize Following Treasury Yield Normalization", desc: "Equities regain footing as corporate balance sheets and third-quarter earnings reports show steady resilience." },
           { tag: "MACRO / FED", time: "1 hour ago", title: "Fed Signals Balanced Data-Driven Target Rates Entering Q4", desc: "Central bank officials emphasize data-dependent stance while inflation and employment metrics hit consensus bands." },
@@ -950,6 +959,11 @@
         title: "Tech & Innovation Briefing",
         subhead: "Latest Technology & Developer News",
         icon: "fa-microchip",
+        tickers: [
+          { symbol: "NVDA", val: "$141.20", change: "+1.85%", positive: true },
+          { symbol: "AAPL", val: "$232.10", change: "+0.32%", positive: true },
+          { symbol: "MSFT", val: "$428.50", change: "-0.15%", positive: false }
+        ],
         items: [
           { tag: "ARTIFICIAL INTELLIGENCE", time: "15 mins ago", title: "Edge AI Architectures Deliver Local Inference at Cloud-Level Speeds", desc: "Optimized neural runtimes enable complex reasoning models to run natively on tablet and desktop hardware." },
           { tag: "DEVELOPER TOOLS", time: "2 hours ago", title: "WebAssembly Multi-Threading Standards Adopted Across All Major Engines", desc: "High-performance web applications receive significant CPU acceleration and optimized memory management capabilities." },
@@ -960,6 +974,11 @@
         title: "Global & International Affairs",
         subhead: "Worldwide Economic & Geopolitical Pulse",
         icon: "fa-earth-americas",
+        tickers: [
+          { symbol: "BRENT CRUDE", val: "$74.15", change: "-0.82%", positive: false },
+          { symbol: "GOLD (XAU)", val: "$2,735.40", change: "+0.54%", positive: true },
+          { symbol: "EUR / USD", val: "1.0852", change: "+0.12%", positive: true }
+        ],
         items: [
           { tag: "GLOBAL LOGISTICS", time: "30 mins ago", title: "Cross-Border Ocean Freight Transit Times Reach Seasonal High Efficiency", desc: "Port throughput and logistics supply chains report steady flow following modernized automated customs clearance." },
           { tag: "EUROPEAN UNION", time: "2 hours ago", title: "EU Digital Infrastructure Initiative Allocates Funding for Clean Data Centers", desc: "Renewable energy standards for cloud compute hubs gain unanimous parliamentary support across member states." },
@@ -970,6 +989,11 @@
         title: "Business & Corporate Strategy",
         subhead: "Enterprise Leadership & Market Dynamics",
         icon: "fa-briefcase",
+        tickers: [
+          { symbol: "DOW JONES", val: "43,729.34", change: "+0.22%", positive: true },
+          { symbol: "RUSSELL 2000", val: "2,392.10", change: "+0.95%", positive: true },
+          { symbol: "AMZN", val: "$207.80", change: "-0.40%", positive: false }
+        ],
         items: [
           { tag: "HYBRID WORK", time: "40 mins ago", title: "Enterprise Desk Automation Boosts Hub Productivity Metrics", desc: "Organizations invest in smart desk kiosk integration and centralized workflow dashboards for hybrid teams." },
           { tag: "VENTURE CAPITAL", time: "3 hours ago", title: "B2B SaaS Automation Capital Investments Rise 18% Year-Over-Year", desc: "Investor focus shifts heavily toward practical operational efficiency and automated resource planning tools." },
@@ -980,6 +1004,11 @@
         title: "Healthcare & Science Outlook",
         subhead: "Biotech & Medical Advances",
         icon: "fa-heart-pulse",
+        tickers: [
+          { symbol: "NBI (BIOTECH)", val: "4,480.20", change: "+1.12%", positive: true },
+          { symbol: "LLY", val: "$835.60", change: "+1.45%", positive: true },
+          { symbol: "JNJ", val: "$161.40", change: "-0.18%", positive: false }
+        ],
         items: [
           { tag: "MEDTECH", time: "25 mins ago", title: "Wearable Clinical Monitors Achieve Multi-Metric Vital Tracking Approval", desc: "Wrist and chest hardware receive medical clearance for continuous cardiovascular and recovery metric tracking." },
           { tag: "BIOTECH", time: "1 hour ago", title: "Targeted Cellular Repair Trials Show Strong Long-Term Efficacy", desc: "Phase III studies demonstrate positive cellular resilience metrics across chronic muscular conditions." },
@@ -990,6 +1019,11 @@
         title: "Energy & Climate Transition",
         subhead: "Renewables & Grid Technology",
         icon: "fa-leaf",
+        tickers: [
+          { symbol: "NAT GAS", val: "$2.72", change: "+2.10%", positive: true },
+          { symbol: "ICLN (CLEAN)", val: "$14.85", change: "+0.75%", positive: true },
+          { symbol: "TSLA", val: "$288.50", change: "-1.10%", positive: false }
+        ],
         items: [
           { tag: "GRID TECH", time: "10 mins ago", title: "Grid-Scale Energy Storage Systems Set Reliability Benchmark", desc: "Next-gen battery storage installations stabilize peak demand fluctuations while maintaining voltage consistency." },
           { tag: "SOLAR ENERGY", time: "2 hours ago", title: "Commercial Photovoltaic Panels Achieve 32% Output Efficiency Record", desc: "Manufacturing innovations reduce per-watt production costs while enhancing durability against severe weather." },
@@ -1006,6 +1040,19 @@
       if (id('newsModalSubhead')) id('newsModalSubhead').textContent = categoryData.subhead;
       if (id('newsModalHeaderIcon')) id('newsModalHeaderIcon').className = `fa-solid ${categoryData.icon} text-indigo-400`;
 
+      // Render Ticker Pills
+      const tickerContainer = id('newsTickerContainer');
+      if (tickerContainer && categoryData.tickers) {
+        tickerContainer.innerHTML = categoryData.tickers.map(t => `
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 text-center">
+            <span class="text-[10px] font-bold text-slate-400 block truncate">${escapeHtml(t.symbol)}</span>
+            <span class="text-xs font-black text-slate-100 digital-font block">${escapeHtml(t.val)}</span>
+            <span class="text-[10px] font-bold ${t.positive ? 'text-emerald-400' : 'text-rose-400'}">${escapeHtml(t.change)}</span>
+          </div>
+        `).join('');
+      }
+
+      // Render Headline Items
       const container = id('newsHeadlinesContainer');
       if (container) {
         container.innerHTML = categoryData.items.map(item => `
