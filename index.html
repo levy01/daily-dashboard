@@ -1,1352 +1,657 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="timing it">
-  <title>timing it</title>
+<meta charset="utf-8">
+<title>Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --clock: #ff2a1a; --glow: rgba(255, 42, 26, 0.35); --tf: 4.4vw; }
+  html, body { background: #000; color: #f2f2f2; -webkit-text-size-adjust: 100%; touch-action: manipulation;
+    -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif; padding: 2vw 3vw 6vw; min-height: 100%; }
+  button, input { font-family: inherit; border: 0; outline: 0; -webkit-appearance: none; appearance: none; color: inherit; }
+  ::-webkit-scrollbar { display: none; }
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons CDN -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  /* ---------- big display ---------- */
+  #clock { text-align: center; white-space: nowrap; font-size: 18vw; line-height: 1; font-weight: 300; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums; -webkit-font-feature-settings: "tnum"; font-feature-settings: "tnum";
+    color: var(--clock); text-shadow: 0 0 2.5vw var(--glow); -webkit-user-select: none; user-select: none; }
+  #clock .sub { font-size: 0.16em; letter-spacing: 0; margin-left: 0.15em; opacity: 0.55; font-weight: 400; text-shadow: none; }
+  #clock.sw-pause, #clock.sw-cd { color: #ffb84d; text-shadow: 0 0 2.5vw rgba(255, 184, 77, 0.3); }
 
-  <style>
-    @font-face {
-      font-family: 'Digital';
-      src: url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2') format('woff2');
-    }
-    .digital-font {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      letter-spacing: -0.02em;
-    }
-    /* Dynamic Digital LED Glow Styles */
-    .digital-led-red {
-      color: #ff3b30;
-      text-shadow: 0 0 20px rgba(255, 59, 48, 0.65), 0 0 40px rgba(255, 59, 48, 0.35);
-    }
-    .digital-led-green {
-      color: #22c55e;
-      text-shadow: 0 0 20px rgba(34, 197, 94, 0.65), 0 0 40px rgba(34, 197, 94, 0.35);
-    }
-    .digital-led-cyan {
-      color: #06b6d4;
-      text-shadow: 0 0 20px rgba(6, 182, 212, 0.65), 0 0 40px rgba(6, 182, 212, 0.35);
-    }
-    .digital-led-amber {
-      color: #f59e0b;
-      text-shadow: 0 0 20px rgba(245, 158, 11, 0.65), 0 0 40px rgba(245, 158, 11, 0.35);
-    }
-    .digital-led-purple {
-      color: #a855f7;
-      text-shadow: 0 0 20px rgba(168, 85, 247, 0.65), 0 0 40px rgba(168, 85, 247, 0.35);
-    }
-    .digital-led-white {
-      color: #f8fafc;
-      text-shadow: 0 0 20px rgba(248, 250, 252, 0.65), 0 0 40px rgba(248, 250, 252, 0.35);
-    }
-    .digital-led-terracotta {
-      color: #e06d53;
-      text-shadow: 0 0 20px rgba(224, 109, 83, 0.65), 0 0 40px rgba(224, 109, 83, 0.35);
-    }
-    .digital-led-blue {
-      color: #3b82f6;
-      text-shadow: 0 0 20px rgba(59, 130, 246, 0.65), 0 0 40px rgba(59, 130, 246, 0.35);
-    }
-    /* Prevent selection on tap/hold for iOS kiosk buttons */
-    .no-select {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  </style>
+  #tools { position: static; z-index: 5; display: flex; justify-content: flex-end; margin-bottom: 1vw; }
+  #tools button { width: 44px; height: 44px; border-radius: 22px; background: #151517; color: #aaa; font-size: 20px; margin-left: 8px; opacity: 0.5; }
+  #tools button.on { background: #34343a; color: #fff; opacity: 1; }
+
+  /* ---------- stopwatch controls ---------- */
+  #controls { display: none; justify-content: center; align-items: center; margin-top: 1.4vw; }
+  body.sw #controls { display: flex; }
+  #controls button { font-size: 5vw; font-weight: 600; padding: 1.8vw 5vw; border-radius: 2vw; margin: 0 1.2vw; min-width: 30vw; }
+  #controls small { font-size: 0.55em; font-weight: 400; opacity: 0.75; margin-left: 0.4em; }
+  #btnMain { background: #1f9d6b; color: #fff; }
+  #btnMain.stop { background: #c0392b; }
+  #btnMain.cancel { background: #55555a; }
+  #btnReset { background: #2a2a2e; color: #d0d0d4; }
+  #btnReset.off { opacity: 0.35; }
+  #controls button:active { opacity: 0.7; }
+
+  /* ---------- edit bar ---------- */
+  .edit-only { display: none; }
+  body.edit .edit-only { display: flex; }
+  #editbar { align-items: center; margin-top: 2vw; font-size: 3.4vw; color: #8a8a8e; flex-wrap: wrap; }
+  #editbar button { background: #1b1b1e; color: #bbb; padding: 1.2vw 3vw; border-radius: 1.4vw; margin: 0 1vw 0 1.2vw; font-size: 1em; }
+  #editbar button.on { background: #34343a; color: #fff; }
+  #editbar .hint { font-size: 0.8em; margin-left: 1vw; }
+
+  /* ---------- task columns ---------- */
+  #lists { margin-top: 3vw; border-top: 1px solid #2a2a2e; padding-top: 2.4vw; }
+  .col { --accent: #4da3ff; display: flex; flex-direction: column; min-width: 0; margin-bottom: 6vw; }
+  .c1 { --accent: #3ddc97; } .c2 { --accent: #ffb84d; } .c3 { --accent: #c792ea; }
+  .colhead { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 1.4vw; }
+  .colhead h2 { font-size: 4vw; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--accent); }
+  .cnt { font-size: 3.2vw; color: #6b6b70; white-space: nowrap; }
+  .cnt b { color: #ff6b5e; font-weight: 700; }
+  .tasks { min-height: 0; }
+  .task { display: flex; align-items: flex-start; padding: 0.55em 0.2em 0.55em 0; border-bottom: 1px solid #141416; font-size: var(--tf);
+    line-height: 1.25; cursor: pointer; min-height: 44px; -webkit-user-select: none; user-select: none; }
+  .task:active { background: rgba(255, 255, 255, 0.05); }
+  .dot { flex: 0 0 auto; width: 0.62em; height: 0.62em; border: 2px solid var(--accent); border-radius: 50%; margin: 0.32em 0.6em 0 0; opacity: 0.8; }
+  .txt { flex: 1 1 0; min-width: 0; word-wrap: break-word; overflow-wrap: break-word; }
+  .task.done .txt { text-decoration: line-through; color: #5c5c61; }
+  .task.done .dot { background: var(--accent); }
+  .task.queued { opacity: 0.45; cursor: default; }
+  .badge { flex: 0 0 auto; margin-left: 0.5em; font-size: 0.62em; font-weight: 700; padding: 0.12em 0.55em; border-radius: 1em; align-self: flex-start; margin-top: 0.25em; }
+  .age1 .badge { background: #4a3a00; color: #ffd27a; }
+  .age2 .badge { background: #6a3200; color: #ffab66; }
+  .age3 .badge { background: #8a1c14; color: #fff; }
+  .age3 .txt { color: #ff9d94; }
+  .badge.q { background: #1d1d22; color: #8a8a8e; }
+  .tbtn { flex: 0 0 auto; width: 44px; height: 44px; margin: -0.5em 0 -0.5em 0.2em; background: transparent; color: #8a8a8e; font-size: 20px; }
+  .tbtn.del { color: #c0574a; }
+  .empty { color: #4a4a4f; font-size: calc(var(--tf) * 0.85); padding: 0.4em 0; }
+  .addrow { margin-top: 1.6vw; }
+  .addrow input { flex: 1 1 auto; min-width: 0; background: #101012; border: 1px solid #26262a; border-radius: 1.4vw; padding: 2vw 2.4vw; font-size: 4vw; -webkit-user-select: text; user-select: text; }
+  .addrow button { flex: 0 0 auto; background: #2d6cdf; color: #fff; border-radius: 1.4vw; padding: 0 4vw; margin-left: 1.4vw; font-size: 4vw; font-weight: 600; }
+  .notice { padding: 6vw 2vw; color: #8a8a8e; font-size: 4vw; text-align: center; line-height: 1.5; }
+
+  /* ---------- footer ---------- */
+  #foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; border-top: 1px solid #2a2a2e; padding-top: 2vw; }
+  #date { font-size: 5vw; font-weight: 300; width: 100%; text-align: center; margin-bottom: 2vw; }
+  #modeSwitch { display: inline-block; background: #161618; border-radius: 2vw; padding: 0.6vw; }
+  #modeSwitch button { background: transparent; color: #7a7a80; font-size: 3.6vw; padding: 1.6vw 3.4vw; border-radius: 1.6vw; }
+  #modeSwitch button.on { background: #34343a; color: #fff; }
+  #footR { text-align: center; line-height: 1.15; width: 100%; margin-top: 2vw; }
+  #wx { font-size: 5vw; font-weight: 300; }
+  #wx .hl { font-size: 0.62em; color: #8a8a8e; margin-left: 0.4em; }
+  #status { font-size: 3vw; color: #4a4a50; margin-top: 0.6vw; }
+  #status.err { color: #d4694a; }
+
+  /* ---------- overlays ---------- */
+  #dim { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #000; opacity: 0; pointer-events: none; z-index: 20; transition: opacity 1.5s; }
+  #dim.on { opacity: 0.62; }
+  #modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.82); z-index: 30; align-items: center; justify-content: center; padding: 4vw; }
+  #modal.open { display: flex; }
+  #modal .box { background: #151518; border: 1px solid #2c2c31; border-radius: 16px; padding: 22px; width: 100%; max-width: 560px; }
+  #modal h3 { font-size: 20px; margin-bottom: 14px; }
+  #modal label { display: block; font-size: 13px; color: #8a8a8e; margin: 12px 0 5px; text-transform: uppercase; letter-spacing: 0.08em; }
+  #modal input { width: 100%; background: #0c0c0e; border: 1px solid #2c2c31; border-radius: 10px; padding: 12px; font-size: 16px; -webkit-user-select: text; user-select: text; }
+  #modal .row { display: flex; justify-content: flex-end; margin-top: 18px; }
+  #modal .row button { padding: 12px 18px; border-radius: 10px; background: #26262b; color: #ddd; font-size: 16px; margin-left: 10px; }
+  #modal .row button.primary { background: #2d6cdf; color: #fff; font-weight: 600; }
+  #modal .row button.danger { background: #4a1f1b; color: #ff9d94; margin-right: auto; margin-left: 0; }
+  #modal .info { font-size: 13px; color: #6b6b70; margin-top: 12px; line-height: 1.5; }
+
+  /* ---------- kiosk layout: tablet landscape / laptop ---------- */
+  @media (min-width: 821px) {
+    html, body { overflow: hidden; height: 100%; }
+    :root { --tf: min(2.35vw, 30px); }
+    body { position: fixed; top: 0; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; padding: 1.2vw 2.4vw 1vw; }
+    #clock { font-size: 19.5vw; flex: 0 0 auto; }
+    #tools { position: absolute; top: 12px; right: 16px; margin-bottom: 0; }
+    #controls { margin-top: 0.8vw; flex: 0 0 auto; }
+    #controls button { font-size: 3vw; padding: 1.1vw 4.5vw; border-radius: 1.4vw; min-width: 21vw; }
+    #editbar { margin-top: 1vw; font-size: 1.8vw; flex: 0 0 auto; }
+    #editbar button { padding: 0.6vw 1.6vw; border-radius: 1vw; margin: 0 0.6vw 0 0.8vw; }
+    #lists { flex: 1 1 auto; min-height: 0; display: flex; margin-top: 1.4vw; padding-top: 1.2vw; }
+    .col { flex: 1 1 0; padding: 0 1.6vw; border-left: 1px solid #1c1c1f; margin-bottom: 0; min-height: 0; overflow: hidden; }
+    .col:first-child { border-left: 0; padding-left: 0; }
+    .colhead { margin-bottom: 0.8vw; flex: 0 0 auto; }
+    .colhead h2 { font-size: 2vw; }
+    .cnt { font-size: 1.5vw; }
+    .tasks { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    /* narrow columns: edit/delete buttons drop to their own line instead of squeezing the text */
+    .task { flex-wrap: wrap; }
+    .task > .edit-only { flex: 0 0 100%; justify-content: flex-end; margin-top: -0.2em; }
+    .tbtn { height: 36px; margin: 0 0 0 10px; }
+    .addrow { flex: 0 0 auto; margin-top: 0.8vw; }
+    .addrow input { font-size: 1.8vw; padding: 0.9vw 1.2vw; border-radius: 1vw; }
+    .addrow button { font-size: 1.8vw; padding: 0 2vw; margin-left: 0.8vw; border-radius: 1vw; }
+    .notice { font-size: 2vw; width: 100%; }
+    #foot { flex: 0 0 auto; flex-wrap: nowrap; padding-top: 1vw; justify-content: space-between; }
+    #date { order: 2; width: auto; font-size: 3.2vw; margin-bottom: 0; letter-spacing: 0.01em; }
+    #modeSwitch { order: 1; flex: 1 1 0; background: transparent; padding: 0; text-align: left; }
+    #modeSwitch .pill { display: inline-block; background: #161618; border-radius: 1.2vw; padding: 0.3vw; }
+    #modeSwitch button { font-size: 1.9vw; padding: 0.8vw 1.6vw; border-radius: 1vw; }
+    #footR { order: 3; flex: 1 1 0; text-align: right; width: auto; margin-top: 0; }
+    #wx { font-size: 2.8vw; }
+    #status { font-size: max(1.1vw, 11px); margin-top: 0.2vw; }
+    #modeSwitch.wrap { display: block; }
+  }
+</style>
 </head>
-<body class="h-full flex flex-col justify-between overflow-hidden bg-[#060913] text-slate-100 font-sans antialiased no-select">
+<body>
+  <div id="tools">
+    <button id="btnEdit" type="button" title="Add / edit tasks">&#9998;</button>
+    <button id="btnGear" type="button" title="Connection">&#9881;</button>
+  </div>
 
-  <!-- Top Header / Navigation Bar -->
-  <header class="flex items-center justify-between px-6 py-2 border-b border-slate-800/80 bg-[#0b0f1d]/90 gap-4">
-    
-    <!-- Left Section: Title & Logo -->
-    <div class="flex items-center space-x-2 shrink-0">
-      <div class="w-5 h-5 rounded-md bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
-        <i class="fa-solid fa-bullseye text-[10px]"></i>
-      </div>
-      <h1 class="text-xs font-bold text-slate-200 tracking-tight hidden sm:block">timing it</h1>
+  <div id="clock">--:--:--</div>
+
+  <div id="controls">
+    <button id="btnMain" type="button">Start</button>
+    <button id="btnReset" type="button" class="off">Reset</button>
+  </div>
+
+  <div id="editbar" class="edit-only">
+    <span>Add to</span>
+    <button id="dayToday" type="button" data-day="today">Today</button>
+    <button id="dayTomorrow" type="button" data-day="tomorrow">Tomorrow</button>
+    <span class="hint">tap a task to check it off &middot; &#9998; edit &middot; &#10005; delete</span>
+  </div>
+
+  <div id="lists"></div>
+
+  <div id="foot">
+    <div id="modeSwitch"><div class="pill">
+      <button id="modeClock" type="button" class="on">Clock</button><button id="modeSw" type="button">Stopwatch</button>
+    </div></div>
+    <div id="date"></div>
+    <div id="footR">
+      <div id="wx"></div>
+      <div id="status"></div>
     </div>
+  </div>
 
-    <!-- Center Section: Unified 5-Segment Single Pill Switcher -->
-    <div class="flex items-center justify-center min-w-0 flex-1">
-      <div class="flex items-center bg-slate-900/90 border border-slate-800 rounded-xl p-1 overflow-x-auto no-scrollbar max-w-full shrink-0 shadow-inner">
-        <button onclick="setMode('clock')" id="btnModeClock" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 bg-indigo-600/30 text-indigo-300 shadow">
-          <i class="fa-regular fa-clock text-[11px]"></i>
-          <span id="labelClock">Clock</span>
-        </button>
+  <div id="dim"></div>
 
-        <button onclick="setMode('workout')" id="btnModeWorkout" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 text-slate-400 hover:text-slate-200">
-          <i class="fa-solid fa-stopwatch text-[11px]"></i>
-          <span id="labelWorkout">Timer</span>
-        </button>
-
-        <button onclick="setMode('pomodoro')" id="btnModePomodoro" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 text-slate-400 hover:text-slate-200">
-          <i class="fa-solid fa-brain text-[11px]"></i>
-          <span>Pomodoro</span>
-        </button>
-
-        <button onclick="setMode('shortbreak')" id="btnModeShortbreak" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 text-slate-400 hover:text-slate-200">
-          <i class="fa-solid fa-mug-hot text-[11px]"></i>
-          <span>Short Break</span>
-        </button>
-
-        <button onclick="setMode('longbreak')" id="btnModeLongbreak" class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 text-slate-400 hover:text-slate-200">
-          <i class="fa-solid fa-couch text-[11px]"></i>
-          <span>Long Break</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Right Header Controls -->
-    <div class="flex items-center space-x-2 shrink-0">
-      <button onclick="loadTasksFromUrl(true)" title="Sync Tasks" class="bg-[#111628] border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white w-9 h-9 rounded-xl flex items-center justify-center transition">
-        <i id="syncIcon" class="fa-solid fa-arrows-rotate text-xs"></i>
-      </button>
-
-      <button onclick="openTaskModal()" title="Task & Dashboard Settings" class="bg-[#111628] border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white w-9 h-9 rounded-xl flex items-center justify-center transition">
-        <i class="fa-solid fa-gear text-xs text-indigo-400"></i>
-      </button>
-    </div>
-  </header>
-
-  <!-- Main Content Layout -->
-  <main class="flex-1 flex flex-col justify-between p-4 space-y-3 min-h-0">
-    <section class="bg-[#0b0f1d]/80 rounded-2xl border border-slate-800/90 py-5 px-6 flex flex-col items-center justify-center relative shadow-xl min-h-[220px]">
-      
-      <!-- MODE 1: GYM WALL CLOCK DISPLAY (Supports Dual Time Zone Layout) -->
-      <div id="clockDisplaySection" class="flex flex-col items-center justify-center w-full">
-        <!-- Main Clocks Container: Dynamic Grid based on Dual Clock setting -->
-        <div id="dualClockContainer" class="flex flex-wrap items-center justify-center gap-6 sm:gap-12 w-full">
-          
-          <!-- Primary / Local Wall Clock -->
-          <div class="flex flex-col items-center">
-            <span id="primaryClockLabel" class="hidden text-[11px] font-bold tracking-widest text-indigo-400 uppercase mb-1">LOCAL TIME</span>
-            <div class="flex items-baseline space-x-3">
-              <div id="clockDigits" class="digital-font digital-led-red text-7xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none">
-                02:37:52
-              </div>
-              <span id="clockAmPm" class="text-slate-400 font-bold text-xl sm:text-2xl tracking-wider">AM</span>
-            </div>
-          </div>
-
-          <!-- Secondary World Clock (Hidden by default until enabled in Settings) -->
-          <div id="secondaryClockCard" class="hidden flex-col items-center pl-6 border-l border-slate-800/80">
-            <span id="secondaryClockLabel" class="text-[11px] font-bold tracking-widest text-indigo-400 uppercase mb-1">LONDON (GMT)</span>
-            <div class="flex items-baseline space-x-2">
-              <div id="secondaryClockDigits" class="digital-font text-6xl sm:text-7xl md:text-8xl font-black tracking-tight leading-none text-slate-300">
-                07:37:52
-              </div>
-              <span id="secondaryClockAmPm" class="text-slate-400 font-bold text-lg sm:text-xl tracking-wider">AM</span>
-            </div>
-          </div>
-
-        </div>
-        
-        <!-- Clean Single Line: Date + Integrated Weather -->
-        <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-slate-400 text-xs font-bold uppercase tracking-wider pt-4">
-          <button onclick="openNewsModal()" title="View Market News Briefing" class="hover:text-indigo-400 transition cursor-pointer flex items-center gap-1.5">
-            <span id="clockDate">SAT, NOV 7, 2026</span>
-            <i class="fa-solid fa-newspaper text-[10px] text-indigo-400/80"></i>
-          </button>
-          
-          <span class="text-slate-700">•</span>
-          
-          <button onclick="openWeatherModal()" title="View Weather Details" class="flex items-center space-x-2 text-slate-300 hover:text-white transition cursor-pointer bg-slate-900/40 hover:bg-slate-800/60 px-2.5 py-1 rounded-md border border-slate-800/50">
-            <i id="weatherIcon" class="fa-solid fa-cloud-sun text-slate-300 text-sm"></i>
-            <span id="weatherTemp" class="font-bold text-slate-100">74°F</span>
-            <span id="weatherRange" class="text-slate-400 text-[11px] font-medium">H: 86° L: 73°</span>
-            <span id="weatherCity" class="text-slate-400 text-[11px] font-normal truncate max-w-[140px]">
-              <i class="fa-solid fa-location-dot text-[9px] ml-1 mr-0.5 text-slate-400"></i>Miami / Doral
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <!-- MODE 2-5: COUNTDOWN / STOPWATCH TIMER DISPLAY -->
-      <div id="timerDisplaySection" class="hidden flex-col items-center justify-center space-y-4 w-full">
-        
-        <!-- Countdown Get-Ready Banner -->
-        <div id="countdownBanner" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-400 px-5 py-1 rounded-full text-xs font-bold uppercase tracking-widest animate-pulse">
-          GET READY: <span id="countdownSecs">5</span>s
-        </div>
-
-        <!-- Stopwatch Digits -->
-        <div id="stopwatchDigits" class="digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-green tracking-tight leading-none">
-          00:00.0
-        </div>
-
-        <!-- Stopwatch Control Buttons -->
-        <div class="flex items-center space-x-3 pt-1">
-          <button id="btnStartWithDelay" onclick="startWithDelay()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition shadow-lg flex items-center space-x-1.5">
-            <i class="fa-solid fa-hourglass-start text-[11px]"></i>
-            <span>5s Delay Start</span>
-          </button>
-          
-          <button id="btnToggleTimer" onclick="toggleTimer()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow">
-            <i id="iconToggleTimer" class="fa-solid fa-play text-[11px]"></i>
-            <span id="textToggleTimer">Start</span>
-          </button>
-
-          <button onclick="resetTimer()" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 font-bold px-3 py-2 rounded-xl text-xs transition">
-            <i class="fa-solid fa-rotate-left text-[11px]"></i>
-          </button>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- Bottom Half: Grouped To-Do Lists (Always 3 Columns Side-by-Side for Landscape Mode) -->
-    <div class="grid grid-cols-3 gap-4 flex-1 min-h-0 pt-1">
-      
-      <!-- Column 1: Work -->
-      <div class="bg-[#0b0f1d]/80 rounded-2xl border border-slate-800/90 p-4 flex flex-col justify-between space-y-3 min-h-0 shadow-xl">
-        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 shrink-0">
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-            <h3 id="headerTitle-Work" class="font-bold text-slate-200 tracking-wide text-xs uppercase">Work</h3>
-          </div>
-          <span id="count-Work" class="text-xs bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono font-bold">0/0</span>
-        </div>
-        
-        <ul id="list-Work" class="space-y-2 flex-1 overflow-y-auto pr-1 no-scrollbar"></ul>
-        
-        <div class="flex items-center space-x-2 pt-2 border-t border-slate-800/80 shrink-0">
-          <input type="text" id="input-Work" onkeydown="if(event.key==='Enter') addInlineTask('Work')" placeholder="+ Add Work task..." class="flex-1 min-w-0 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
-          <button onclick="addInlineTask('Work')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shrink-0">Add</button>
-        </div>
-      </div>
-
-      <!-- Column 2: FinTech -->
-      <div class="bg-[#0b0f1d]/80 rounded-2xl border border-slate-800/90 p-4 flex flex-col justify-between space-y-3 min-h-0 shadow-xl">
-        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 shrink-0">
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            <h3 id="headerTitle-FinTech" class="font-bold text-slate-200 tracking-wide text-xs uppercase">FinTech</h3>
-          </div>
-          <span id="count-FinTech" class="text-xs bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono font-bold">0/0</span>
-        </div>
-        
-        <ul id="list-FinTech" class="space-y-2 flex-1 overflow-y-auto pr-1 no-scrollbar"></ul>
-        
-        <div class="flex items-center space-x-2 pt-2 border-t border-slate-800/80 shrink-0">
-          <input type="text" id="input-FinTech" onkeydown="if(event.key==='Enter') addInlineTask('FinTech')" placeholder="+ Add FinTech task..." class="flex-1 min-w-0 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
-          <button onclick="addInlineTask('FinTech')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shrink-0">Add</button>
-        </div>
-      </div>
-
-      <!-- Column 3: Personal -->
-      <div class="bg-[#0b0f1d]/80 rounded-2xl border border-slate-800/90 p-4 flex flex-col justify-between space-y-3 min-h-0 shadow-xl">
-        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 shrink-0">
-          <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
-            <h3 id="headerTitle-Personal" class="font-bold text-slate-200 tracking-wide text-xs uppercase">Personal</h3>
-          </div>
-          <span id="count-Personal" class="text-xs bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono font-bold">0/0</span>
-        </div>
-        
-        <ul id="list-Personal" class="space-y-2 flex-1 overflow-y-auto pr-1 no-scrollbar"></ul>
-        
-        <div class="flex items-center space-x-2 pt-2 border-t border-slate-800/80 shrink-0">
-          <input type="text" id="input-Personal" onkeydown="if(event.key==='Enter') addInlineTask('Personal')" placeholder="+ Add Personal task..." class="flex-1 min-w-0 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500">
-          <button onclick="addInlineTask('Personal')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shrink-0">Add</button>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- Weather Detailed Information Modal -->
-  <div id="weatherModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeWeatherModalOnBackdrop(event)">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
-      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="font-bold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-cloud-sun text-amber-400"></i> Detailed Weather Forecast
-        </h3>
-        <button onclick="closeWeatherModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      
-      <div class="p-6 space-y-4">
-        <!-- Current Condition Stats Card -->
-        <div class="bg-[#111628] border border-slate-800 rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <span id="weatherModalCity" class="text-xs font-bold text-indigo-400 uppercase tracking-wider block">Miami / Doral</span>
-            <div id="weatherModalTemp" class="text-4xl font-black text-white digital-font">74°F</div>
-            <span id="weatherModalCondition" class="text-xs text-slate-400">Partly Cloudy</span>
-          </div>
-          <div class="grid grid-cols-2 gap-3 text-right text-xs">
-            <div>
-              <span class="text-slate-500 block text-[10px]">High / Low</span>
-              <span id="weatherModalHighLow" class="font-semibold text-slate-200">86° / 73°</span>
-            </div>
-            <div>
-              <span class="text-slate-500 block text-[10px]">Humidity</span>
-              <span id="weatherModalHumidity" class="font-semibold text-slate-200">68%</span>
-            </div>
-            <div>
-              <span class="text-slate-500 block text-[10px]">Wind</span>
-              <span id="weatherModalWind" class="font-semibold text-slate-200">9 mph E</span>
-            </div>
-            <div>
-              <span class="text-slate-500 block text-[10px]">UV Index</span>
-              <span id="weatherModalUv" class="font-semibold text-slate-200">6 (Mod)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5-Day Forecast Days with Vivid Colored Icons -->
-        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider pt-1">5-Day Outlook</h4>
-        <div id="weatherForecastList" class="space-y-2">
-          <div class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800/80 rounded-lg text-xs">
-            <span class="font-bold text-slate-200 w-16">Today</span>
-            <i class="fa-solid fa-sun text-amber-400 text-sm"></i>
-            <span class="text-slate-400 text-right w-24">High: <strong class="text-white">86°</strong> Low: <strong class="text-slate-400">73°</strong></span>
-          </div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800/80 rounded-lg text-xs">
-            <span class="font-bold text-slate-200 w-16">Sun</span>
-            <i class="fa-solid fa-cloud-sun text-amber-300 text-sm"></i>
-            <span class="text-slate-400 text-right w-24">High: <strong class="text-white">84°</strong> Low: <strong class="text-slate-400">72°</strong></span>
-          </div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800/80 rounded-lg text-xs">
-            <span class="font-bold text-slate-200 w-16">Mon</span>
-            <i class="fa-solid fa-cloud-showers-heavy text-blue-400 text-sm"></i>
-            <span class="text-slate-400 text-right w-24">High: <strong class="text-white">81°</strong> Low: <strong class="text-slate-400">70°</strong></span>
-          </div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800/80 rounded-lg text-xs">
-            <span class="font-bold text-slate-200 w-16">Tue</span>
-            <i class="fa-solid fa-cloud text-cyan-400 text-sm"></i>
-            <span class="text-slate-400 text-right w-24">High: <strong class="text-white">83°</strong> Low: <strong class="text-slate-400">71°</strong></span>
-          </div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-950 border border-slate-800/80 rounded-lg text-xs">
-            <span class="font-bold text-slate-200 w-16">Wed</span>
-            <i class="fa-solid fa-bolt text-yellow-400 text-sm"></i>
-            <span class="text-slate-400 text-right w-24">High: <strong class="text-white">85°</strong> Low: <strong class="text-slate-400">74°</strong></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="p-4 bg-slate-950/60 border-t border-slate-800 flex justify-end">
-        <button onclick="closeWeatherModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2 rounded-lg text-xs transition">Close</button>
+  <div id="modal">
+    <div class="box">
+      <h3>Connect this device</h3>
+      <label for="inApi">API URL</label>
+      <input id="inApi" type="url" autocapitalize="off" autocorrect="off" placeholder="https://script.google.com/macros/s/.../exec">
+      <label for="inKey">Key</label>
+      <input id="inKey" type="text" autocapitalize="off" autocorrect="off" placeholder="48-character key">
+      <div class="info" id="modalInfo"></div>
+      <div class="row">
+        <button id="mForget" type="button" class="danger">Forget</button>
+        <button id="mClose" type="button">Close</button>
+        <button id="mSave" type="button" class="primary">Save &amp; sync</button>
       </div>
     </div>
   </div>
 
-  <!-- Settings & Task Sync Modal -->
-  <div id="taskModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
-      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="font-bold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-gear text-indigo-400"></i> Settings & Task Sync
-        </h3>
-        <button onclick="closeTaskModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      
-      <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-        <!-- Landing Clock Color Selection -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">Clock Display Color</label>
-          <div class="grid grid-cols-6 gap-2">
-            <button onclick="setClockColor('red')" class="h-8 rounded-lg bg-red-500 flex items-center justify-center"><i id="check-red" class="fa-solid fa-check text-xs text-white hidden"></i></button>
-            <button onclick="setClockColor('green')" class="h-8 rounded-lg bg-emerald-500 flex items-center justify-center"><i id="check-green" class="fa-solid fa-check text-xs text-white hidden"></i></button>
-            <button onclick="setClockColor('cyan')" class="h-8 rounded-lg bg-cyan-500 flex items-center justify-center"><i id="check-cyan" class="fa-solid fa-check text-xs text-white hidden"></i></button>
-            <button onclick="setClockColor('amber')" class="h-8 rounded-lg bg-amber-500 flex items-center justify-center"><i id="check-amber" class="fa-solid fa-check text-xs text-white hidden"></i></button>
-            <button onclick="setClockColor('purple')" class="h-8 rounded-lg bg-purple-500 flex items-center justify-center"><i id="check-purple" class="fa-solid fa-check text-xs text-white hidden"></i></button>
-            <button onclick="setClockColor('white')" class="h-8 rounded-lg bg-slate-200 flex items-center justify-center"><i id="check-white" class="fa-solid fa-check text-xs text-slate-900 hidden"></i></button>
-          </div>
-        </div>
+<script>
+(function () {
+  'use strict';
 
-        <!-- 12H / 24H Format & Theme Mode Grid -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Time Format</label>
-            <div class="flex bg-slate-950 p-1 rounded-lg border border-slate-800">
-              <button id="btnFormat12" onclick="setTimeFormat(true)" class="flex-1 py-1 rounded text-xs font-bold bg-indigo-600 text-white">12H</button>
-              <button id="btnFormat24" onclick="setTimeFormat(false)" class="flex-1 py-1 rounded text-xs font-bold text-slate-400">24H</button>
-            </div>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Theme Mode</label>
-            <div class="flex bg-slate-950 p-1 rounded-lg border border-slate-800">
-              <button id="btnThemeAuto" onclick="setThemeMode('auto')" class="flex-1 py-1 rounded text-xs font-bold text-slate-400">Auto</button>
-              <button id="btnThemeLight" onclick="setThemeMode('light')" class="flex-1 py-1 rounded text-xs font-bold text-slate-400">Light</button>
-              <button id="btnThemeDark" onclick="setThemeMode('dark')" class="flex-1 py-1 rounded text-xs font-bold bg-indigo-600 text-white">Dark</button>
-            </div>
-          </div>
-        </div>
+  // ---------- storage helpers ----------
+  function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { window.localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { window.localStorage.removeItem(k); } catch (e) {} }
+  function jget(k, def) { try { var s = lsGet(k); return s ? JSON.parse(s) : def; } catch (e) { return def; } }
 
-        <!-- 2-Column Grid: World Clock & News Industry Settings -->
-        <div class="grid grid-cols-2 gap-3 border-t border-slate-800 pt-3">
-          <!-- Column 1: World Clock Settings -->
-          <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Enable World Clock</label>
-              <input type="checkbox" id="dualClockToggle" onchange="toggleDualClockSetting(this.checked)" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500">
-            </div>
+  // ---------- constants ----------
+  var POLL_MS = 45000;
+  var WEATHER_MS = 20 * 60 * 1000;
+  var STALE_MS = 3 * 60 * 1000;
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var COLORS = {
+    red: ['#ff2a1a', 'rgba(255,42,26,0.35)'], green: ['#2bff6e', 'rgba(43,255,110,0.3)'],
+    cyan: ['#19d3ff', 'rgba(25,211,255,0.3)'], amber: ['#ffb84d', 'rgba(255,184,77,0.3)'],
+    purple: ['#c792ea', 'rgba(199,146,234,0.3)'], white: ['#f2f2f2', 'rgba(242,242,242,0.25)']
+  };
+  var DEFAULT_SETTINGS = {
+    sections: ['Work', 'FinTech', 'Personal'], color: 'red', clock24h: false, countdown: 5,
+    lat: 25.7617, lon: -80.1918, unit: 'fahrenheit', dim_start: '22:00', dim_end: '06:00',
+    reload_at: '03:00', evening_hour: 17
+  };
 
-            <div id="dualClockConfigGroup" class="space-y-2 pl-2 border-l-2 border-indigo-500/40 hidden">
-              <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Timezone</label>
-                <select id="secondaryTimezoneSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-                  <option value="UTC">UTC / GMT</option>
-                  <option value="Europe/London">London (GMT/BST)</option>
-                  <option value="America/New_York">New York (EST/EDT)</option>
-                  <option value="America/Los_Angeles">San Francisco (PST/PDT)</option>
-                  <option value="Europe/Berlin">Frankfurt (CET)</option>
-                  <option value="Asia/Tokyo">Tokyo (JST)</option>
-                  <option value="Australia/Sydney">Sydney (AEST)</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-[11px] font-medium text-slate-400 mb-1">Custom Label</label>
-                <input type="text" id="secondaryClockLabelInput" placeholder="LONDON (GMT)" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 uppercase">
-              </div>
-            </div>
-          </div>
+  function $(id) { return document.getElementById(id); }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function hhmm(ms) { var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 
-          <!-- Column 2: News Industry Preference -->
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">News Industry</label>
-            <select id="newsCategorySelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-              <option value="Finance">Finance & Markets</option>
-              <option value="Tech">Tech & Innovation</option>
-              <option value="International">Global / International</option>
-              <option value="Business">Business & Strategy</option>
-              <option value="Healthcare">Healthcare & Science</option>
-              <option value="Energy">Energy & Climate</option>
-            </select>
-          </div>
-        </div>
+  // local calendar-day helpers (strings 'YYYY-MM-DD')
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function todayStr() { return ymd(new Date()); }
+  function addDays(s, n) { var p = s.split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)).toISOString().slice(0, 10); }
+  function daysBetween(a, b) {
+    var pa = a.split('-'), pb = b.split('-');
+    return Math.round((Date.UTC(+pb[0], +pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], +pa[1] - 1, +pa[2])) / 86400000);
+  }
 
-        <!-- Section Renaming Options -->
-        <div class="border-t border-slate-800 pt-3 space-y-2">
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Task Column Titles</label>
-          <div class="grid grid-cols-3 gap-2">
-            <div>
-              <span class="text-[10px] text-slate-500 block mb-1">Section 1</span>
-              <input type="text" id="sectionNameInput-Work" placeholder="Work" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-            </div>
-            <div>
-              <span class="text-[10px] text-slate-500 block mb-1">Section 2</span>
-              <input type="text" id="sectionNameInput-FinTech" placeholder="FinTech" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-            </div>
-            <div>
-              <span class="text-[10px] text-slate-500 block mb-1">Section 3</span>
-              <input type="text" id="sectionNameInput-Personal" placeholder="Personal" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-            </div>
-          </div>
-        </div>
+  // ---------- state ----------
+  var cfg = { api: lsGet('dash_api') || '', key: lsGet('dash_key') || '' };
+  var settings = {};
+  (function () { var s = jget('dash_settings', {}); for (var k in DEFAULT_SETTINGS) settings[k] = (s[k] !== undefined ? s[k] : DEFAULT_SETTINGS[k]); })();
+  var cache = jget('dash_cache', null);
+  var serverTasks = cache && cache.tasks ? cache.tasks : [];
+  var lastOk = cache && cache.at ? cache.at : 0;
+  var lastErr = '';
+  var queue = jget('dash_queue', []);
+  var editMode = false;
+  var addDay = 'today';
+  var syncing = false, again = false;
 
-        <!-- Task Gist URL & PAT Input -->
-        <div class="border-t border-slate-800 pt-3 space-y-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">Raw Gist JSON URL</label>
-            <input type="url" id="gistUrlInput" placeholder="https://gist.githubusercontent.com/..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">GitHub Token (PAT)</label>
-            <input type="password" id="githubPatInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-indigo-500 font-mono">
-          </div>
-        </div>
-      </div>
-
-      <div class="p-4 bg-slate-950/60 border-t border-slate-800 flex justify-end space-x-2">
-        <button type="button" onclick="closeTaskModal()" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">Cancel</button>
-        <button type="button" id="btnSaveGistSettings" onclick="saveGistSettings()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2 rounded-lg text-xs transition cursor-pointer">Save Settings</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Dynamic Industry News Briefing Modal -->
-  <div id="newsModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="closeNewsModalOnBackdrop(event)">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
-      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
-        <h3 class="font-bold text-slate-100 flex items-center gap-2">
-          <i id="newsModalHeaderIcon" class="fa-solid fa-newspaper text-indigo-400"></i>
-          <span id="newsModalTitle">Daily Industry Briefing</span>
-        </h3>
-        <button onclick="closeNewsModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      
-      <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-        <!-- Live Market Ticker Bar (Dynamic) -->
-        <div id="newsTickerContainer" class="grid grid-cols-3 gap-2"></div>
-
-        <!-- Headline Articles Container -->
-        <h4 id="newsModalSubhead" class="text-xs font-bold text-slate-400 uppercase tracking-wider pt-2">Today's Headlines</h4>
-        <div id="newsHeadlinesContainer" class="space-y-3"></div>
-      </div>
-
-      <div class="p-4 bg-slate-950/60 border-t border-slate-800 flex justify-end">
-        <button onclick="closeNewsModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2 rounded-lg text-xs transition">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // Helper ID selector
-    const id = (elId) => document.getElementById(elId);
-
-    // Global UI Settings & Mode State
-    let currentMode = 'clock'; // clock, workout, pomodoro, shortbreak, longbreak
-    let clockColor = localStorage.getItem('clockColor') || 'red';
-    let is12Hour = localStorage.getItem('is12Hour') !== 'false';
-    let themeMode = localStorage.getItem('themeMode') || 'dark'; // 'auto', 'light', 'dark'
-    let newsCategory = localStorage.getItem('newsCategory') || 'Finance';
-    let isDualClockEnabled = localStorage.getItem('isDualClockEnabled') === 'true';
-    let secondaryTimezone = localStorage.getItem('secondaryTimezone') || 'Europe/London';
-    let secondaryClockLabel = localStorage.getItem('secondaryClockLabel') || 'LONDON (GMT)';
-
-    // Section Custom Names (Local + Synced)
-    let sectionNames = {
-      Work: localStorage.getItem('sectionName_Work') || 'Work',
-      FinTech: localStorage.getItem('sectionName_FinTech') || 'FinTech',
-      Personal: localStorage.getItem('sectionName_Personal') || 'Personal'
-    };
-
-    function updateSectionTitlesUI() {
-      ['Work', 'FinTech', 'Personal'].forEach(secKey => {
-        const titleName = sectionNames[secKey] || secKey;
-        
-        // Update Column Headers
-        const headerEl = id(`headerTitle-${secKey}`);
-        if (headerEl) headerEl.textContent = titleName;
-        
-        // Update Input Placeholders
-        const inputEl = id(`input-${secKey}`);
-        if (inputEl) inputEl.placeholder = `+ Add ${titleName} task...`;
-        
-        // Update Settings Inputs
-        const settingInput = id(`sectionNameInput-${secKey}`);
-        if (settingInput && document.activeElement !== settingInput) settingInput.value = titleName;
-      });
+  // ---------- one-tap pairing via #api=...&key=... ----------
+  (function () {
+    var h = window.location.hash;
+    if (!h || h.length < 2) return;
+    var m = {};
+    h.slice(1).split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) m[kv.slice(0, i)] = decodeURIComponent(kv.slice(i + 1)); });
+    if (m.api && m.key) {
+      cfg.api = m.api; cfg.key = m.key; lsSet('dash_api', cfg.api); lsSet('dash_key', cfg.key);
+      try { window.history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) {}
     }
+  })();
 
-    // Color Theme Map
-    const COLOR_CLASSES = {
-      red: 'digital-led-red',
-      green: 'digital-led-green',
-      cyan: 'digital-led-cyan',
-      amber: 'digital-led-amber',
-      purple: 'digital-led-purple',
-      white: 'digital-led-white'
-    };
+  // ---------- audio (one shared context, unlocked by a tap) ----------
+  var audioCtx = null;
+  function unlockAudio() {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!audioCtx && AC) audioCtx = new AC();
+      if (audioCtx && audioCtx.state !== 'running') audioCtx.resume();
+    } catch (e) {}
+  }
+  function beep(freq, dur) {
+    if (!audioCtx) return;
+    try {
+      var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = freq; g.gain.value = 0.25;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + dur);
+    } catch (e) {}
+  }
 
-    // Theme Switcher Handler
-    function setThemeMode(mode) {
-      themeMode = mode;
-      localStorage.setItem('themeMode', mode);
-      applyThemeMode();
-      initSettingsUI();
+  // =====================================================================
+  //  Clock + stopwatch
+  // =====================================================================
+  var clockEl = $('clock'), dateEl = $('date');
+  var lastDisp = '', lastCls = '', lastDate = '', lastMainLabel = '';
+  var mode = 'clock';
+  var sw = { state: 'idle', start: 0, acc: 0, cdEnd: 0, lastCd: -1 };  // idle | countdown | running | paused
+
+  function swElapsed() { return sw.state === 'running' ? sw.acc + (Date.now() - sw.start) : sw.acc; }
+  function setDisp(html, cls) {
+    if (html !== lastDisp) { lastDisp = html; clockEl.innerHTML = html; }
+    if (cls !== lastCls) { lastCls = cls; clockEl.className = cls; }
+  }
+
+  function tick() {
+    var now = Date.now();
+    if (sw.state === 'countdown') {
+      var rem = Math.ceil((sw.cdEnd - now) / 1000);
+      if (rem <= 0) { sw.state = 'running'; sw.start = sw.cdEnd; sw.acc = 0; sw.lastCd = -1; beep(1320, 0.6); syncButtons(); }
+      else if (rem !== sw.lastCd) { sw.lastCd = rem; if (rem <= 3) beep(880, 0.15); }
     }
-
-    function applyThemeMode() {
-      const root = document.documentElement;
-      let effectiveTheme = themeMode;
-
-      if (themeMode === 'auto') {
-        effectiveTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-      }
-
-      if (effectiveTheme === 'light') {
-        root.classList.remove('dark');
-        document.body.className = "h-full flex flex-col justify-between overflow-hidden bg-slate-100 text-slate-900 font-sans antialiased no-select transition-colors duration-300";
+    if (mode === 'sw') {
+      if (sw.state === 'countdown') {
+        setDisp('' + Math.max(1, Math.ceil((sw.cdEnd - now) / 1000)), 'sw-cd');
       } else {
-        root.classList.add('dark');
-        document.body.className = "h-full flex flex-col justify-between overflow-hidden bg-[#060913] text-slate-100 font-sans antialiased no-select transition-colors duration-300";
+        var ms = swElapsed(), tot = Math.floor(ms / 1000);
+        var t = pad(Math.floor(tot / 3600)) + ':' + pad(Math.floor(tot / 60) % 60) + ':' + pad(tot % 60);
+        setDisp(t + '<span class="sub">.' + Math.floor((ms % 1000) / 100) + '</span>', sw.state === 'paused' ? 'sw-pause' : '');
       }
+    } else {
+      var d = new Date(now), h = d.getHours(), suffix = '';
+      if (!settings.clock24h) { suffix = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12; }
+      setDisp(pad(h) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + (suffix ? '<span class="sub">' + suffix + '</span>' : ''), '');
     }
+    var dd = new Date(now);
+    var ds = DAYS[dd.getDay()] + ', ' + MONTHS[dd.getMonth()] + ' ' + dd.getDate() + ' ' + dd.getFullYear();
+    if (ds !== lastDate) { lastDate = ds; dateEl.textContent = ds; }
+  }
 
-    // Listen to system color scheme changes if in 'auto' mode
-    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-      if (themeMode === 'auto') applyThemeMode();
+  function syncButtons() {
+    var label, cls = '';
+    if (sw.state === 'idle') label = 'Start<small>' + settings.countdown + 's delay</small>';
+    else if (sw.state === 'countdown') { label = 'Cancel'; cls = 'cancel'; }
+    else if (sw.state === 'running') { label = 'Stop'; cls = 'stop'; }
+    else label = 'Resume';
+    if (label !== lastMainLabel) { lastMainLabel = label; $('btnMain').innerHTML = label; }
+    $('btnMain').className = cls;
+    $('btnReset').className = sw.state === 'idle' ? 'off' : '';
+  }
+
+  function setMode(m) {
+    mode = m;
+    document.body.className = (m === 'sw' ? 'sw ' : '') + (editMode ? 'edit' : '');
+    $('modeClock').className = m === 'clock' ? 'on' : '';
+    $('modeSw').className = m === 'sw' ? 'on' : '';
+    lastDisp = ''; tick();
+  }
+
+  $('btnMain').addEventListener('click', function () {
+    unlockAudio();
+    var now = Date.now();
+    if (sw.state === 'idle') {
+      if (settings.countdown > 0) { sw.state = 'countdown'; sw.cdEnd = now + settings.countdown * 1000; sw.lastCd = -1; sw.acc = 0; }
+      else { sw.state = 'running'; sw.start = now; sw.acc = 0; }
+    }
+    else if (sw.state === 'countdown') { sw.state = 'idle'; sw.acc = 0; }
+    else if (sw.state === 'running') { sw.acc = swElapsed(); sw.state = 'paused'; }
+    else if (sw.state === 'paused') { sw.start = now; sw.state = 'running'; }
+    syncButtons(); tick();
+  });
+  $('btnReset').addEventListener('click', function () { sw.state = 'idle'; sw.acc = 0; sw.lastCd = -1; syncButtons(); tick(); });
+  $('modeClock').addEventListener('click', function () { setMode('clock'); });
+  $('modeSw').addEventListener('click', function () { unlockAudio(); setMode('sw'); });
+
+  // =====================================================================
+  //  Tasks: local view = last server copy + pending ops (optimistic)
+  // =====================================================================
+  var listsEl = $('lists');
+  var sectionSig = '';
+
+  function newId() { return (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).slice(0, 20); }
+  function saveQueue() { lsSet('dash_queue', JSON.stringify(queue)); }
+  function enqueue(op) { queue.push(op); saveQueue(); renderTasks(); renderStatus(); sync(); }
+
+  function applyOp(map, order, op) {
+    var t = map[op.id];
+    if (op.op === 'add') {
+      if (!t) { map[op.id] = { id: op.id, section: op.section, text: op.text, day: op.day, done: '' }; order.push(op.id); }
+    } else if (!t) { return; }
+    else if (op.op === 'done') { t.done = op.done || ''; }
+    else if (op.op === 'del') { delete map[op.id]; }
+    else if (op.op === 'edit') { if (op.text) t.text = op.text; if (op.section) t.section = op.section; if (op.day) t.day = op.day; }
+  }
+
+  function viewTasks() {
+    var map = {}, order = [];
+    serverTasks.forEach(function (t) { map[t.id] = { id: t.id, section: t.section, text: t.text, day: t.day, done: t.done || '' }; order.push(t.id); });
+    queue.forEach(function (op) { applyOp(map, order, op); });
+    return order.filter(function (id) { return map[id]; }).map(function (id) { return map[id]; });
+  }
+
+  function sectionsFor(tasks) {
+    var list = [], seen = {};
+    settings.sections.forEach(function (n) { var k = String(n).toLowerCase(); if (!seen[k]) { seen[k] = 1; list.push({ key: k, name: n }); } });
+    tasks.forEach(function (t) { var k = String(t.section || '').toLowerCase(); if (k && !seen[k] && list.length < 4) { seen[k] = 1; list.push({ key: k, name: t.section }); } });
+    return list.slice(0, 4);
+  }
+
+  function buildColumns(cols) {
+    var html = '';
+    cols.forEach(function (c, i) {
+      html += '<div class="col c' + i + '" data-key="' + esc(c.key) + '" data-name="' + esc(c.name) + '">' +
+        '<div class="colhead"><h2>' + esc(c.name) + '</h2><span class="cnt"></span></div>' +
+        '<div class="tasks"></div>' +
+        '<div class="addrow edit-only"><input type="text" maxlength="200" placeholder="Add to ' + esc(c.name) + '&hellip;" autocapitalize="sentences"><button type="button" data-act="add">Add</button></div>' +
+        '</div>';
     });
+    listsEl.innerHTML = html;
+  }
 
-    // Modal Control Functions for Settings & Tasks
-    function openTaskModal() {
-      const modal = id('taskModal');
-      if (modal) {
-        initSettingsUI();
-        modal.classList.remove('hidden');
-      }
+  function renderTasks() {
+    if (!cfg.api) {
+      sectionSig = '';
+      listsEl.innerHTML = '<div class="notice">Not connected yet.<br>Tap &#9881; and paste your API URL and key,<br>or open your pairing link on this device.</div>';
+      return;
     }
-
-    function closeTaskModal() {
-      const modal = id('taskModal');
-      if (modal) {
-        modal.classList.add('hidden');
-      }
-    }
-
-    // Setting Handlers
-    function setClockColor(color) {
-      clockColor = color;
-      localStorage.setItem('clockColor', color);
-      
-      const clockDigits = id('clockDigits');
-      if (clockDigits) {
-        clockDigits.className = `digital-font ${COLOR_CLASSES[color] || 'digital-led-red'} text-7xl sm:text-8xl md:text-9xl font-black tracking-tight leading-none`;
-      }
-      initSettingsUI();
-    }
-
-    function setTimeFormat(use12) {
-      is12Hour = use12;
-      localStorage.setItem('is12Hour', use12);
-      initSettingsUI();
-      updateClock();
-    }
-
-    function toggleDualClockSetting(enabled) {
-      isDualClockEnabled = enabled;
-      localStorage.setItem('isDualClockEnabled', enabled);
-      initSettingsUI();
-      updateClock();
-    }
-
-    function saveGistSettings() {
-      try {
-        const urlInput = id('gistUrlInput');
-        const patInput = id('githubPatInput');
-        const catSelect = id('newsCategorySelect');
-        const secTzSelect = id('secondaryTimezoneSelect');
-        const secLabelInput = id('secondaryClockLabelInput');
-
-        const url = urlInput ? urlInput.value.trim() : '';
-        const pat = patInput ? patInput.value.trim() : '';
-        const category = catSelect ? catSelect.value : 'Finance';
-        const secTz = secTzSelect ? secTzSelect.value : 'Europe/London';
-        const secLabel = secLabelInput ? secLabelInput.value.trim() : 'LONDON (GMT)';
-
-        // Save custom section names with fallback checks
-        ['Work', 'FinTech', 'Personal'].forEach(secKey => {
-          const inputEl = id(`sectionNameInput-${secKey}`);
-          const inputVal = inputEl ? inputEl.value.trim() : '';
-          if (inputVal) {
-            sectionNames[secKey] = inputVal;
-            localStorage.setItem(`sectionName_${secKey}`, inputVal);
-          }
-        });
-
-        savedGistUrl = url;
-        savedGithubPat = pat;
-        newsCategory = category;
-        secondaryTimezone = secTz;
-        secondaryClockLabel = secLabel || 'SECONDARY';
-
-        localStorage.setItem('gistTasksUrl', url);
-        localStorage.setItem('githubPat', pat);
-        localStorage.setItem('newsCategory', category);
-        localStorage.setItem('secondaryTimezone', secTz);
-        localStorage.setItem('secondaryClockLabel', secondaryClockLabel);
-
-        updateSectionTitlesUI();
-        closeTaskModal();
-        updateClock();
-        syncStateToGist();
-        loadTasksFromUrl(true);
-      } catch (err) {
-        console.error('Error in saveGistSettings:', err);
-      }
-    }
-
-    // Mode Selector Handler
-    function setMode(mode) {
-      currentMode = mode;
-      
-      ['Clock', 'Workout', 'Pomodoro', 'Shortbreak', 'Longbreak'].forEach(m => {
-        const btn = id(`btnMode${m}`);
-        if (btn) {
-          if (m.toLowerCase() === mode) {
-            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 bg-indigo-600/30 text-indigo-300 shadow';
-          } else {
-            btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 shrink-0 text-slate-400 hover:text-slate-200';
-          }
-        }
-      });
-
-      const secClock = id('clockDisplaySection');
-      const secTimer = id('timerDisplaySection');
-      const stopwatchDigits = id('stopwatchDigits');
-
-      // Configure preset durations for countdown timer modes
-      if (mode === 'workout') {
-        timerDurationMs = 0; // Continuous count up timer
-        if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-green tracking-tight leading-none';
-      } else if (mode === 'pomodoro') {
-        timerDurationMs = 25 * 60 * 1000; // 25 mins
-        if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-terracotta tracking-tight leading-none';
-      } else if (mode === 'shortbreak') {
-        timerDurationMs = 5 * 60 * 1000; // 5 mins
-        if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-cyan tracking-tight leading-none';
-      } else if (mode === 'longbreak') {
-        timerDurationMs = 15 * 60 * 1000; // 15 mins
-        if (stopwatchDigits) stopwatchDigits.className = 'digital-font text-7xl sm:text-8xl md:text-9xl font-black digital-led-blue tracking-tight leading-none';
-      }
-
-      if (mode === 'clock') {
-        if (secClock) { secClock.classList.remove('hidden'); secClock.classList.add('flex'); }
-        if (secTimer) { secTimer.classList.remove('flex'); secTimer.classList.add('hidden'); }
-      } else {
-        if (secClock) { secClock.classList.remove('flex'); secClock.classList.add('hidden'); }
-        if (secTimer) { secTimer.classList.remove('hidden'); secTimer.classList.add('flex'); }
-        resetTimer();
-      }
-    }
-
-    function toggleTimer() {
-      if (isTimerRunning) {
-        pauseTimer();
-      } else {
-        startTimer();
-      }
-    }
-
-    // Initialize Settings UI inside Modal
-    function initSettingsUI() {
-      // Set active color checkmarks
-      ['red', 'green', 'cyan', 'amber', 'purple', 'white'].forEach(c => {
-        const check = id(`check-${c}`);
-        if (check) {
-          if (c === clockColor) check.classList.remove('hidden');
-          else check.classList.add('hidden');
-        }
-      });
-
-      // Set category select
-      const catSelect = id('newsCategorySelect');
-      if (catSelect) catSelect.value = newsCategory;
-
-      // Set section custom title inputs
-      ['Work', 'FinTech', 'Personal'].forEach(secKey => {
-        const input = id(`sectionNameInput-${secKey}`);
-        if (input) input.value = sectionNames[secKey] || secKey;
-      });
-
-      // Set format buttons
-      const btn12 = id('btnFormat12');
-      const btn24 = id('btnFormat24');
-      if (btn12 && btn24) {
-        if (is12Hour) {
-          btn12.className = 'flex-1 py-1 rounded text-xs font-bold bg-indigo-600 text-white';
-          btn24.className = 'flex-1 py-1 rounded text-xs font-bold text-slate-400';
-        } else {
-          btn24.className = 'flex-1 py-1 rounded text-xs font-bold bg-indigo-600 text-white';
-          btn12.className = 'flex-1 py-1 rounded text-xs font-bold text-slate-400';
-        }
-      }
-
-      // Set Theme Mode Buttons
-      ['Auto', 'Light', 'Dark'].forEach(t => {
-        const btn = id(`btnTheme${t}`);
-        if (btn) {
-          if (t.toLowerCase() === themeMode) {
-            btn.className = 'flex-1 py-1 rounded text-xs font-bold bg-indigo-600 text-white';
-          } else {
-            btn.className = 'flex-1 py-1 rounded text-xs font-bold text-slate-400 hover:text-slate-200';
-          }
-        }
-      });
-
-      // Dual Clock settings init
-      const toggle = id('dualClockToggle');
-      const configGroup = id('dualClockConfigGroup');
-      const tzSelect = id('secondaryTimezoneSelect');
-      const labelInput = id('secondaryClockLabelInput');
-
-      if (toggle) toggle.checked = isDualClockEnabled;
-      if (configGroup) configGroup.className = isDualClockEnabled ? 'space-y-2 pl-2 border-l-2 border-indigo-500/40 block' : 'hidden';
-      if (tzSelect) tzSelect.value = secondaryTimezone;
-      if (labelInput) labelInput.value = secondaryClockLabel;
-    }
-
-    // Apply initial theme on startup
-    applyThemeMode();
-
-    // Wall Clock Update Function
-    function updateClock() {
-      const now = new Date();
-      
-      // Primary Clock Logic
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-      let ampm = '';
-
-      if (is12Hour) {
-        ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-      }
-      const formattedHours = String(hours).padStart(2, '0');
-
-      if (id('clockDigits')) id('clockDigits').textContent = `${formattedHours}:${minutes}:${seconds}`;
-      if (id('clockAmPm')) id('clockAmPm').textContent = is12Hour ? ampm : '';
-      
-      const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
-      if (id('clockDate')) id('clockDate').textContent = now.toLocaleDateString('en-US', options).toUpperCase();
-
-      // Secondary World Clock Logic
-      const secCard = id('secondaryClockCard');
-      const primLabel = id('primaryClockLabel');
-
-      if (isDualClockEnabled && secCard) {
-        secCard.classList.remove('hidden');
-        secCard.classList.add('flex');
-        if (primLabel) primLabel.classList.remove('hidden');
-
-        try {
-          const secFormatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: secondaryTimezone,
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: is12Hour
-          });
-
-          const secParts = secFormatter.formatToParts(now);
-          let secH = '', secM = '', secS = '', secAmPm = '';
-          
-          secParts.forEach(p => {
-            if (p.type === 'hour') secH = p.value;
-            if (p.type === 'minute') secM = p.value;
-            if (p.type === 'second') secS = p.value;
-            if (p.type === 'dayPeriod') secAmPm = p.value.toUpperCase();
-          });
-
-          if (id('secondaryClockDigits')) id('secondaryClockDigits').textContent = `${secH}:${secM}:${secS}`;
-          if (id('secondaryClockAmPm')) id('secondaryClockAmPm').textContent = is12Hour ? secAmPm : '';
-          if (id('secondaryClockLabel')) id('secondaryClockLabel').textContent = secondaryClockLabel.toUpperCase();
-        } catch (e) {
-          console.error("Secondary clock error:", e);
-        }
-      } else if (secCard) {
-        secCard.classList.remove('flex');
-        secCard.classList.add('hidden');
-        if (primLabel) primLabel.classList.add('hidden');
-      }
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    // Timer Logic Variables & Functions
-    let timerInterval = null;
-    let timerStartTime = 0;
-    let timerElapsedTime = 0;
-    let timerDurationMs = 0;
-    let isTimerRunning = false;
-    let countdownInterval = null;
-
-    function startTimer() {
-      if (isTimerRunning) return;
-      isTimerRunning = true;
-      timerStartTime = Date.now() - timerElapsedTime;
-      
-      timerInterval = setInterval(() => {
-        timerElapsedTime = Date.now() - timerStartTime;
-        if (timerDurationMs > 0 && timerElapsedTime >= timerDurationMs) {
-          timerElapsedTime = timerDurationMs;
-          renderStopwatch();
-          pauseTimer();
-          playCompletionChime();
-          return;
-        }
-        renderStopwatch();
-      }, 50);
-
-      if (id('iconToggleTimer')) id('iconToggleTimer').className = 'fa-solid fa-pause text-[11px]';
-      if (id('textToggleTimer')) id('textToggleTimer').textContent = 'Pause';
-    }
-
-    function pauseTimer() {
-      isTimerRunning = false;
-      clearInterval(timerInterval);
-      if (id('iconToggleTimer')) id('iconToggleTimer').className = 'fa-solid fa-play text-[11px]';
-      if (id('textToggleTimer')) id('textToggleTimer').textContent = 'Start';
-    }
-
-    function resetTimer() {
-      pauseTimer();
-      clearInterval(countdownInterval);
-      if (id('countdownBanner')) id('countdownBanner').classList.add('hidden');
-      timerElapsedTime = 0;
-      renderStopwatch();
-    }
-
-    function renderStopwatch() {
-      const targetTime = timerDurationMs > 0 ? Math.max(0, timerDurationMs - timerElapsedTime) : timerElapsedTime;
-      const totalSeconds = Math.floor(targetTime / 1000);
-      const mins = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-      const secs = String(totalSeconds % 60).padStart(2, '0');
-      const tenths = Math.floor((targetTime % 1000) / 100);
-      
-      if (id('stopwatchDigits')) id('stopwatchDigits').textContent = `${mins}:${secs}.${tenths}`;
-    }
-
-    function startWithDelay() {
-      resetTimer();
-      let count = 5;
-      const banner = id('countdownBanner');
-      const countEl = id('countdownSecs');
-      if (banner) banner.classList.remove('hidden');
-      if (countEl) countEl.textContent = count;
-      playBeep(440, 0.1);
-
-      countdownInterval = setInterval(() => {
-        count--;
-        if (count > 0) {
-          if (countEl) countEl.textContent = count;
-          playBeep(440, 0.1);
-        } else {
-          clearInterval(countdownInterval);
-          if (banner) banner.classList.add('hidden');
-          playBeep(880, 0.3);
-          startTimer();
-        }
-      }, 1000);
-    }
-
-    // Audio Generators (Web Audio API)
-    function playBeep(freq = 440, duration = 0.1) {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.frequency.value = freq;
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
-        osc.stop(ctx.currentTime + duration);
-      } catch (e) {}
-    }
-
-    function playCompletionChime() {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.frequency.value = freq;
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          const start = ctx.currentTime + (idx * 0.12);
-          osc.start(start);
-          gain.gain.exponentialRampToValueAtTime(0.00001, start + 0.3);
-          osc.stop(start + 0.3);
-        });
-      } catch (e) {}
-    }
-
-    // Weather Integration & Weather Modal Controls
-    async function fetchWeather(lat = 25.8195, lon = -80.3553, city = "Miami / Doral") {
-      try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,weather_code,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Weather API error');
-        const data = await res.json();
-
-        const currentTemp = Math.round(data.current ? data.current.temperature_2m : 74);
-        const highTemp = Math.round(data.daily ? data.daily.temperature_2m_max[0] : 86);
-        const lowTemp = Math.round(data.daily ? data.daily.temperature_2m_min[0] : 73);
-        const humidity = data.current ? data.current.relative_humidity_2m : 68;
-        const wind = data.current ? Math.round(data.current.wind_speed_10m) : 9;
-        const uv = data.daily ? Math.round(data.daily.uv_index_max[0]) : 6;
-        const code = data.current ? data.current.weather_code : 0;
-
-        if (id('weatherTemp')) id('weatherTemp').textContent = `${currentTemp}°F`;
-        if (id('weatherRange')) id('weatherRange').textContent = `H: ${highTemp}° L: ${lowTemp}°`;
-        if (id('weatherCity')) id('weatherCity').innerHTML = `<i class="fa-solid fa-location-dot text-[9px] ml-1 mr-0.5 text-slate-400"></i>${city}`;
-        
-        // Modal Weather Card values
-        if (id('weatherModalTemp')) id('weatherModalTemp').textContent = `${currentTemp}°F`;
-        if (id('weatherModalHighLow')) id('weatherModalHighLow').textContent = `${highTemp}° / ${lowTemp}°`;
-        if (id('weatherModalHumidity')) id('weatherModalHumidity').textContent = `${humidity}%`;
-        if (id('weatherModalWind')) id('weatherModalWind').textContent = `${wind} mph E`;
-        if (id('weatherModalUv')) id('weatherModalUv').textContent = `${uv} (Mod)`;
-        if (id('weatherModalCity')) id('weatherModalCity').textContent = city;
-
-        // Neutral weather icon for main header display
-        const iconEl = id('weatherIcon');
-        if (iconEl) {
-          if (code === 0) iconEl.className = 'fa-solid fa-sun text-slate-300 text-sm';
-          else if (code <= 3) iconEl.className = 'fa-solid fa-cloud-sun text-slate-300 text-sm';
-          else if (code <= 67) iconEl.className = 'fa-solid fa-cloud-showers-heavy text-slate-300 text-sm';
-          else iconEl.className = 'fa-solid fa-bolt text-slate-300 text-sm';
-        }
-      } catch (err) {
-        console.error('Weather fetch error:', err);
-        if (id('weatherCity')) id('weatherCity').textContent = "Weather Unavailable";
-      }
-    }
-
-    function openWeatherModal() {
-      if (id('weatherModal')) id('weatherModal').classList.remove('hidden');
-    }
-
-    function closeWeatherModal() {
-      if (id('weatherModal')) id('weatherModal').classList.add('hidden');
-    }
-
-    function closeWeatherModalOnBackdrop(e) {
-      if (e.target === id('weatherModal')) closeWeatherModal();
-    }
-
-    // Dynamic Industry News Briefings Database
-    const NEWS_DATABASE = {
-      Finance: {
-        title: "Financial & Markets Briefing",
-        subhead: "Top Financial & Macro Headlines",
-        icon: "fa-chart-line",
-        tickers: [
-          { symbol: "S&P 500", val: "5,815.20", change: "+0.45%", positive: true },
-          { symbol: "NASDAQ", val: "18,518.60", change: "+0.68%", positive: true },
-          { symbol: "10Y TREASURY", val: "4.08%", change: "-0.03%", positive: false }
-        ],
-        items: [
-          { tag: "MARKETS / EQUITIES", time: "25 mins ago", title: "S&P 500 & Tech Indices Stabilize Following Treasury Yield Normalization", desc: "Equities regain footing as corporate balance sheets and third-quarter earnings reports show steady resilience." },
-          { tag: "MACRO / FED", time: "1 hour ago", title: "Fed Signals Balanced Data-Driven Target Rates Entering Q4", desc: "Central bank officials emphasize data-dependent stance while inflation and employment metrics hit consensus bands." },
-          { tag: "FINTECH & CLEARING", time: "3 hours ago", title: "Instant Settlement Rails Report Record Quarterly Clearing Volume", desc: "Real-time payment providers and API-first institutions post strong metrics driven by cross-border enterprise adoption." }
-        ]
-      },
-      Tech: {
-        title: "Tech & Innovation Briefing",
-        subhead: "Latest Technology & Developer News",
-        icon: "fa-microchip",
-        tickers: [
-          { symbol: "NVDA", val: "$141.20", change: "+1.85%", positive: true },
-          { symbol: "AAPL", val: "$232.10", change: "+0.32%", positive: true },
-          { symbol: "MSFT", val: "$428.50", change: "-0.15%", positive: false }
-        ],
-        items: [
-          { tag: "ARTIFICIAL INTELLIGENCE", time: "15 mins ago", title: "Edge AI Architectures Deliver Local Inference at Cloud-Level Speeds", desc: "Optimized neural runtimes enable complex reasoning models to run natively on tablet and desktop hardware." },
-          { tag: "DEVELOPER TOOLS", time: "2 hours ago", title: "WebAssembly Multi-Threading Standards Adopted Across All Major Engines", desc: "High-performance web applications receive significant CPU acceleration and optimized memory management capabilities." },
-          { tag: "CYBERSECURITY", time: "4 hours ago", title: "Zero-Trust Token Protocols Adopted as Standard for Enterprise Workspaces", desc: "Hardware-backed key authentication ensures encrypted communication channels for remote kiosk terminals." }
-        ]
-      },
-      International: {
-        title: "Global & International Affairs",
-        subhead: "Worldwide Economic & Geopolitical Pulse",
-        icon: "fa-earth-americas",
-        tickers: [
-          { symbol: "BRENT CRUDE", val: "$74.15", change: "-0.82%", positive: false },
-          { symbol: "GOLD (XAU)", val: "$2,735.40", change: "+0.54%", positive: true },
-          { symbol: "EUR / USD", val: "1.0852", change: "+0.12%", positive: true }
-        ],
-        items: [
-          { tag: "GLOBAL LOGISTICS", time: "30 mins ago", title: "Cross-Border Ocean Freight Transit Times Reach Seasonal High Efficiency", desc: "Port throughput and logistics supply chains report steady flow following modernized automated customs clearance." },
-          { tag: "EUROPEAN UNION", time: "2 hours ago", title: "EU Digital Infrastructure Initiative Allocates Funding for Clean Data Centers", desc: "Renewable energy standards for cloud compute hubs gain unanimous parliamentary support across member states." },
-          { tag: "ASIA PACIFIC", time: "5 hours ago", title: "Regional Central Banks Finalize Interoperable Instant Payment Corridors", desc: "ASEAN trade alliance completes direct QR code and clearinghouse integration across participating economies." }
-        ]
-      },
-      Business: {
-        title: "Business & Corporate Strategy",
-        subhead: "Enterprise Leadership & Market Dynamics",
-        icon: "fa-briefcase",
-        tickers: [
-          { symbol: "DOW JONES", val: "43,729.34", change: "+0.22%", positive: true },
-          { symbol: "RUSSELL 2000", val: "2,392.10", change: "+0.95%", positive: true },
-          { symbol: "AMZN", val: "$207.80", change: "-0.40%", positive: false }
-        ],
-        items: [
-          { tag: "STRATEGY / M&A", time: "40 mins ago", title: "Enterprise Software Leaders Expand Strategic Consolidation", desc: "Corporate development teams report increased activity across cloud-native analytics platforms." },
-          { tag: "SUPPLY CHAIN", time: "2 hours ago", title: "Automated Fulfillment Networks Reduce Last-Mile Operational Costs", desc: "Robotics and automated sorting algorithms drive margin expansion for major retail logistics." },
-          { tag: "WORKFORCE", time: "5 hours ago", title: "Hybrid Workplace Standards Drive Demand for Smart Workspace Displays", desc: "Organizations invest in real-time wall dashboards and digital scheduling kiosks." }
-        ]
-      },
-      Healthcare: {
-        title: "Healthcare & Science Briefing",
-        subhead: "Biotech & Medical Advances",
-        icon: "fa-heart-pulse",
-        tickers: [
-          { symbol: "NBI (BIOTECH)", val: "4,620.15", change: "+1.12%", positive: true },
-          { symbol: "LLY", val: "$912.40", change: "+1.45%", positive: true },
-          { symbol: "JNJ", val: "$161.30", change: "-0.18%", positive: false }
-        ],
-        items: [
-          { tag: "BIOTECH", time: "1 hour ago", title: "Next-Gen RNA Therapeutics Enter Phase III Clinical Trials", desc: "Targeted delivery platforms report promising efficacy and safety profiles across trial groups." },
-          { tag: "MEDTECH", time: "3 hours ago", title: "FDA Grants Accelerated Review for Continuous Health Diagnostics", desc: "Non-invasive sensor monitoring systems achieve high precision benchmarks for clinical usage." },
-          { tag: "RESEARCH", time: "6 hours ago", title: "Genomic Sequencing Costs Drop to New Industry Record Lows", desc: "Automated lab instruments accelerate personalized medicine timelines across major research hospitals." }
-        ]
-      },
-      Energy: {
-        title: "Energy & Climate Transition",
-        subhead: "Clean Tech & Energy Commodities",
-        icon: "fa-bolt-lightning",
-        tickers: [
-          { symbol: "NAT GAS", val: "$2.84", change: "+2.15%", positive: true },
-          { symbol: "ICLN", val: "$14.65", change: "+0.78%", positive: true },
-          { symbol: "TSLA", val: "$248.90", change: "+2.30%", positive: true }
-        ],
-        items: [
-          { tag: "GRID TECH", time: "45 mins ago", title: "Battery Energy Storage Systems Reach Multi-Gigawatt Milestone", desc: "Utility-scale storage installations stabilize regional power grids during peak demand hours." },
-          { tag: "RENEWABLES", time: "2 hours ago", title: "Offshore Wind Turbines Achieve Record Capacity Factors", desc: "New turbine architectures improve energy yield per megawatt across North Sea installations." },
-          { tag: "CLEAN TECH", time: "4 hours ago", title: "Green Hydrogen Electrolyzer Production Capacity Doubles Q3", desc: "Manufacturing expansion lowers green fuel costs for heavy industrial manufacturing applications." }
-        ]
-      }
-    };
-
-    function openNewsModal() {
-      const categoryData = NEWS_DATABASE[newsCategory] || NEWS_DATABASE.Finance;
-      
-      // Update Modal Header Title & Icon
-      if (id('newsModalTitle')) id('newsModalTitle').textContent = categoryData.title;
-      if (id('newsModalSubhead')) id('newsModalSubhead').textContent = categoryData.subhead;
-      if (id('newsModalHeaderIcon')) id('newsModalHeaderIcon').className = `fa-solid ${categoryData.icon} text-indigo-400`;
-
-      // Render Ticker Pills
-      const tickerContainer = id('newsTickerContainer');
-      if (tickerContainer && categoryData.tickers) {
-        tickerContainer.innerHTML = categoryData.tickers.map(t => `
-          <div class="bg-slate-950 p-2 rounded-xl border border-slate-800 text-center">
-            <span class="text-[10px] font-bold text-slate-400 block">${escapeHtml(t.symbol)}</span>
-            <span class="text-xs font-mono font-bold text-slate-100">${escapeHtml(t.val)}</span>
-            <span class="text-[10px] font-bold block ${t.positive ? 'text-emerald-400' : 'text-red-400'}">${escapeHtml(t.change)}</span>
-          </div>
-        `).join('');
-      }
-
-      // Render Headline Items
-      const container = id('newsHeadlinesContainer');
-      if (container) {
-        container.innerHTML = categoryData.items.map(item => `
-          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80 space-y-1">
-            <div class="flex items-center justify-between text-[10px]">
-              <span class="font-bold text-indigo-400">${escapeHtml(item.tag)}</span>
-              <span class="text-slate-500">${escapeHtml(item.time)}</span>
-            </div>
-            <h5 class="text-xs font-bold text-slate-200">${escapeHtml(item.title)}</h5>
-            <p class="text-[11px] text-slate-400 leading-relaxed">${escapeHtml(item.desc)}</p>
-          </div>
-        `).join('');
-      }
-
-      id('newsModal').classList.remove('hidden');
-    }
-
-    function closeNewsModal() {
-      id('newsModal').classList.add('hidden');
-    }
-
-    function closeNewsModalOnBackdrop(e) {
-      if (e.target === id('newsModal')) closeNewsModal();
-    }
-
-    // Modal Control Functions for Settings & Tasks
-    function openTaskModal() {
-      initSettingsUI();
-      id('taskModal').classList.remove('hidden');
-    }
-    function closeTaskModal() {
-      id('taskModal').classList.add('hidden');
-    }
-
-    function initGeolocation() {
-      fetchWeather();
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          pos => fetchWeather(pos.coords.latitude, pos.coords.longitude, "Local Area"),
-          err => console.log('Location denied, using default.')
-        );
-      }
-    }
-    initGeolocation();
-
-    // Task Management & Safe Client-Side PAT Storage
-    let savedGistUrl = localStorage.getItem('gistTasksUrl') || '';
-    let savedGithubPat = localStorage.getItem('githubPat') || '';
-    let taskData = { Work: [], FinTech: [], Personal: [] };
-
-    if (savedGistUrl) id('gistUrlInput').value = savedGistUrl;
-    if (savedGithubPat) id('githubPatInput').value = savedGithubPat;
-
-    async function loadTasksFromUrl(showToast = false) {
-      const syncBtn = id('syncIcon');
-      if (syncBtn) syncBtn.classList.add('fa-spin');
-
-      if (!savedGistUrl) {
-        if (syncBtn) syncBtn.classList.remove('fa-spin');
-        return;
-      }
-
-      try {
-        const fetchUrl = `${savedGistUrl}${savedGistUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`;
-        const res = await fetch(fetchUrl);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        
-        ['Work', 'FinTech', 'Personal'].forEach(sec => {
-          if (Array.isArray(data[sec])) {
-            taskData[sec] = data[sec].map(t => typeof t === 'string' ? { text: t, done: false } : t);
-          }
-        });
-
-        // Force-sync remote section names into local state and localStorage for multi-device parity
-        if (data.sectionNames && typeof data.sectionNames === 'object') {
-          ['Work', 'FinTech', 'Personal'].forEach(secKey => {
-            if (data.sectionNames[secKey] && data.sectionNames[secKey].trim() !== '') {
-              sectionNames[secKey] = data.sectionNames[secKey];
-              localStorage.setItem(`sectionName_${secKey}`, data.sectionNames[secKey]);
-            }
-          });
-        }
-
-        updateSectionTitlesUI();
-        renderTasks();
-        if (showToast) alert('Tasks & section names synced successfully!');
-      } catch (err) {
-        console.error('Fetch tasks error:', err);
-      } finally {
-        if (syncBtn) syncBtn.classList.remove('fa-spin');
-      }
-    }
-
-    async function syncStateToGist() {
-      if (!savedGistUrl || !savedGithubPat) return;
-
-      const syncBtn = id('syncIcon');
-      if (syncBtn) syncBtn.classList.add('fa-spin');
-
-      try {
-        const match = savedGistUrl.match(/gist\.githubusercontent\.com\/[^\/]+\/([a-f0-9]+)\/raw/i);
-        if (!match || !match[1]) return;
-        const gistId = match[1];
-
-        // Include both section task items AND custom section names in the payload
-        const payloadData = {
-          ...taskData,
-          sectionNames: sectionNames
-        };
-
-        const payload = {
-          files: {
-            "tasks.json": {
-              content: JSON.stringify(payloadData, null, 2)
-            }
-          }
-        };
-
-        await fetch(`https://api.github.com/gists/${gistId}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `token ${savedGithubPat}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
-      } catch (err) {
-        console.error('Gist sync error:', err);
-      } finally {
-        if (syncBtn) syncBtn.classList.remove('fa-spin');
-      }
-    }
-
-    function renderTasks() {
-      ['Work', 'FinTech', 'Personal'].forEach(sec => {
-        const listEl = id(`list-${sec}`);
-        const countEl = id(`count-${sec}`);
-        const inputEl = id(`input-${sec}`);
-        const headerTitleEl = id(`headerTitle-${sec}`);
-        
-        const customTitle = sectionNames[sec] || sec;
-
-        // Update header title & input placeholder dynamically
-        if (headerTitleEl) headerTitleEl.textContent = customTitle;
-        if (inputEl) inputEl.placeholder = `+ Add ${customTitle} task...`;
-
-        if (!listEl) return;
-
-        listEl.innerHTML = '';
-        const tasks = taskData[sec] || [];
-        let doneCount = 0;
-
-        tasks.forEach((item, idx) => {
-          const isDone = item.done;
-          if (isDone) doneCount++;
-
-          const li = document.createElement('li');
-          li.className = `flex items-center justify-between p-3 rounded-xl border transition ${isDone ? 'bg-[#111628]/40 border-slate-800/40 opacity-50' : 'bg-[#111628]/90 border-slate-800/80 hover:border-slate-700'}`;
-
-          li.innerHTML = `
-            <label class="flex items-center space-x-3 cursor-pointer flex-1 min-w-0">
-              <input type="checkbox" ${isDone ? 'checked' : ''} onchange="toggleTaskDone('${sec}', ${idx})" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-950">
-              <span class="text-xs font-semibold ${isDone ? 'line-through text-slate-500' : 'text-slate-200'} truncate">${escapeHtml(item.text)}</span>
-            </label>
-            <button onclick="removeTask('${sec}', ${idx})" class="text-slate-600 hover:text-red-400 p-1 transition">
-              <i class="fa-solid fa-trash-can text-[11px]"></i>
-            </button>
-          `;
-          listEl.appendChild(li);
-        });
-
-        if (countEl) countEl.textContent = `${doneCount}/${tasks.length}`;
-      });
-    }
-
-    function toggleTaskDone(section, index) {
-      if (taskData[section] && taskData[section][index]) {
-        taskData[section][index].done = !taskData[section][index].done;
-        renderTasks();
-        syncStateToGist();
-      }
-    }
-
-    function addInlineTask(section) {
-      const inputEl = id(`input-${section}`);
-      if (!inputEl) return;
-      const text = inputEl.value.trim();
-      if (text) {
-        if (!taskData[section]) taskData[section] = [];
-        taskData[section].push({ text: text, done: false });
-        inputEl.value = '';
-        renderTasks();
-        syncStateToGist();
-      }
-    }
-
-    function removeTask(section, index) {
-      if (taskData[section]) {
-        taskData[section].splice(index, 1);
-        renderTasks();
-        syncStateToGist();
-      }
-    }
-
-    function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    }
-
-    // Auto-sync polling every 60 seconds across all devices
-    setInterval(() => loadTasksFromUrl(false), 60000);
-    loadTasksFromUrl(false);
-
-    // Explicit touch event binding for iOS / iPad Safari touch responsiveness
-    document.addEventListener('DOMContentLoaded', () => {
-      const saveBtn = id('btnSaveGistSettings');
-      if (saveBtn) {
-        saveBtn.addEventListener('touchend', (e) => {
-          e.preventDefault();
-          saveGistSettings();
-        });
-      }
+    var tasks = viewTasks(), today = todayStr(), tomorrow = addDays(today, 1);
+    var cols = sectionsFor(tasks);
+    var sig = cols.map(function (c) { return c.key; }).join('|') + '#' + cols.map(function (c) { return c.name; }).join('|');
+    if (sig !== sectionSig) { sectionSig = sig; buildColumns(cols); }
+
+    var buckets = cols.map(function () { return { open: [], done: [], queued: [] }; });
+    var queuedTotal = 0;
+    tasks.forEach(function (t) {
+      var k = String(t.section || '').toLowerCase(), ci = cols.length - 1, i;
+      for (i = 0; i < cols.length; i++) { if (cols[i].key === k) { ci = i; break; } }
+      if (t.day > today) { if (!t.done) { buckets[ci].queued.push(t); queuedTotal++; } }
+      else if (t.done) { if (t.done === today) buckets[ci].done.push(t); }
+      else buckets[ci].open.push(t);
     });
-  </script>
+    queuedCount = queuedTotal;
+
+    var colEls = listsEl.querySelectorAll('.col');
+    cols.forEach(function (c, i) {
+      var b = buckets[i], el = colEls[i]; if (!el) return;
+      b.open.sort(function (x, y) { return x.day < y.day ? -1 : (x.day > y.day ? 1 : 0); });   // most overdue first
+      var late = b.open.filter(function (t) { return daysBetween(t.day, today) >= 1; }).length;
+      el.querySelector('.cnt').innerHTML = b.open.length + ' open' + (late ? ' &middot; <b>' + late + ' carried</b>' : '') + (b.done.length ? ' &middot; ' + b.done.length + ' done' : '');
+      var html = '';
+      function row(t, kind) {
+        var age = Math.max(0, daysBetween(t.day, today));
+        var cls = 'task' + (kind === 'done' ? ' done' : '') + (kind === 'queued' ? ' queued' : '') + (kind === 'open' && age >= 1 ? ' age' + Math.min(age, 3) : '');
+        var badge = '';
+        if (kind === 'open' && age >= 1) badge = '<span class="badge">' + age + 'd</span>';
+        if (kind === 'queued') badge = '<span class="badge q">' + (t.day === tomorrow ? 'tomorrow' : t.day.slice(5)) + '</span>';
+        var btns = '<span class="edit-only"><button class="tbtn" type="button" data-act="edit">&#9998;</button><button class="tbtn del" type="button" data-act="del">&#10005;</button></span>';
+        return '<div class="' + cls + '" data-id="' + esc(t.id) + '"><span class="dot"></span><span class="txt">' + esc(t.text) + '</span>' + badge + btns + '</div>';
+      }
+      b.open.forEach(function (t) { html += row(t, 'open'); });
+      b.done.forEach(function (t) { html += row(t, 'done'); });
+      if (editMode) b.queued.forEach(function (t) { html += row(t, 'queued'); });
+      if (!html) html = '<div class="empty">Nothing queued</div>';
+      el.querySelector('.tasks').innerHTML = html;
+    });
+  }
+  var queuedCount = 0;
+
+  function findTask(id) { var a = viewTasks(); for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i]; return null; }
+
+  function addTask(colEl) {
+    var input = colEl.querySelector('input'), text = input.value.replace(/\s+/g, ' ').trim();
+    if (!text) return;
+    var day = addDay === 'tomorrow' ? addDays(todayStr(), 1) : todayStr();
+    input.value = '';
+    enqueue({ op: 'add', id: newId(), section: colEl.getAttribute('data-name'), text: text, day: day });
+  }
+
+  listsEl.addEventListener('click', function (e) {
+    var btn = e.target.closest ? e.target.closest('[data-act]') : null;
+    var row = e.target.closest ? e.target.closest('.task') : null;
+    if (btn && btn.getAttribute('data-act') === 'add') { addTask(btn.closest('.col')); return; }
+    if (!row) return;
+    var id = row.getAttribute('data-id'), t = findTask(id);
+    if (!t) return;
+    var act = btn ? btn.getAttribute('data-act') : '';
+    if (act === 'del') { if (window.confirm('Delete "' + t.text + '"?')) enqueue({ op: 'del', id: id }); return; }
+    if (act === 'edit') {
+      var nt = window.prompt('Edit task', t.text);
+      if (nt !== null && nt.replace(/\s+/g, ' ').trim()) enqueue({ op: 'edit', id: id, text: nt.replace(/\s+/g, ' ').trim() });
+      return;
+    }
+    if (row.className.indexOf('queued') >= 0) return;
+    enqueue({ op: 'done', id: id, done: t.done ? '' : todayStr() });
+  });
+  listsEl.addEventListener('keydown', function (e) {
+    if ((e.key === 'Enter' || e.keyCode === 13) && e.target.tagName === 'INPUT') addTask(e.target.closest('.col'));
+  });
+
+  // edit mode + add-day selector
+  function setEdit(on) {
+    editMode = on;
+    if (on) addDay = (new Date().getHours() >= settings.evening_hour) ? 'tomorrow' : 'today';
+    document.body.className = (mode === 'sw' ? 'sw ' : '') + (editMode ? 'edit' : '');
+    $('btnEdit').className = on ? 'on' : '';
+    $('dayToday').className = addDay === 'today' ? 'on' : '';
+    $('dayTomorrow').className = addDay === 'tomorrow' ? 'on' : '';
+    renderTasks();
+  }
+  $('btnEdit').addEventListener('click', function () { setEdit(!editMode); });
+  $('dayToday').addEventListener('click', function () { addDay = 'today'; $('dayToday').className = 'on'; $('dayTomorrow').className = ''; });
+  $('dayTomorrow').addEventListener('click', function () { addDay = 'tomorrow'; $('dayTomorrow').className = 'on'; $('dayToday').className = ''; });
+
+  // =====================================================================
+  //  Sync
+  // =====================================================================
+  function renderStatus() {
+    var el = $('status'), txt = '', err = false;
+    if (!cfg.api) { txt = 'not connected'; err = true; }
+    else if (lastErr === 'auth') { txt = 'wrong key - tap the gear'; err = true; }
+    else if (queue.length) { txt = 'pending ' + queue.length + (lastErr ? ' - ' + lastErr : ''); err = !!lastErr; }
+    else if (!lastOk) { txt = lastErr || 'not synced yet'; err = true; }
+    else if (Date.now() - lastOk > STALE_MS) { txt = 'stale - last sync ' + hhmm(lastOk); err = true; }
+    else { txt = 'synced ' + hhmm(lastOk); }
+    if (cfg.api && queuedCount) txt += ' · ' + queuedCount + ' queued for later';
+    el.textContent = txt;
+    el.className = err ? 'err' : '';
+  }
+
+  function applyRemoteSettings(s) {
+    if (!s) return;
+    var changed = JSON.stringify(s) !== JSON.stringify(jget('dash_settings', {}));
+    for (var k in DEFAULT_SETTINGS) if (s[k] !== undefined && s[k] !== null && s[k] !== '') settings[k] = s[k];
+    if (!(settings.sections instanceof Array) || !settings.sections.length) settings.sections = DEFAULT_SETTINGS.sections;
+    lsSet('dash_settings', JSON.stringify(s));
+    applyLook();
+    if (changed) loadWeather();
+  }
+
+  function applyLook() {
+    var c = COLORS[String(settings.color).toLowerCase()] || COLORS.red;
+    document.documentElement.style.setProperty('--clock', c[0]);
+    document.documentElement.style.setProperty('--glow', c[1]);
+    lastMainLabel = ''; syncButtons();
+  }
+
+  function sync() {
+    if (!cfg.api || !cfg.key) { renderStatus(); return; }
+    if (syncing) { again = true; return; }
+    syncing = true;
+    var sent = queue.slice(), xhr = new XMLHttpRequest(), body = null;
+    try {
+      if (sent.length) {
+        xhr.open('POST', cfg.api, true);
+        xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');   // "simple" request: no CORS preflight
+        body = JSON.stringify({ key: cfg.key, today: todayStr(), ops: sent });
+      } else {
+        xhr.open('GET', cfg.api + (cfg.api.indexOf('?') < 0 ? '?' : '&') + 'key=' + encodeURIComponent(cfg.key) + '&today=' + todayStr() + '&_=' + Date.now(), true);
+      }
+    } catch (e) { lastErr = 'bad URL'; finish(); return; }
+    xhr.timeout = 25000;
+    xhr.onload = function () {
+      var j = null; try { j = JSON.parse(xhr.responseText); } catch (e) {}
+      if (j && j.ok) {
+        queue = queue.slice(sent.length); saveQueue();          // only the ops we actually delivered
+        serverTasks = j.tasks || []; lastOk = Date.now(); lastErr = '';
+        lsSet('dash_cache', JSON.stringify({ tasks: serverTasks, at: lastOk }));
+        applyRemoteSettings(j.settings);
+      } else { lastErr = (j && j.error) ? j.error : 'bad response'; }
+      finish();
+    };
+    xhr.onerror = xhr.ontimeout = function () { lastErr = 'offline'; finish(); };
+    xhr.send(body);
+    function finish() { syncing = false; renderTasks(); renderStatus(); if (again) { again = false; setTimeout(sync, 200); } }
+  }
+
+  // connection modal
+  function openModal() {
+    $('inApi').value = cfg.api; $('inKey').value = cfg.key;
+    $('modalInfo').textContent = queue.length + ' change(s) waiting to sync. Tip: you can also pair by opening this page with #api=...&key=... added to the address.';
+    $('modal').className = 'open';
+  }
+  $('btnGear').addEventListener('click', openModal);
+  $('mClose').addEventListener('click', function () { $('modal').className = ''; });
+  $('mSave').addEventListener('click', function () {
+    cfg.api = $('inApi').value.trim(); cfg.key = $('inKey').value.trim();
+    lsSet('dash_api', cfg.api); lsSet('dash_key', cfg.key); lastErr = '';
+    $('modal').className = ''; sectionSig = ''; renderTasks(); sync();
+  });
+  $('mForget').addEventListener('click', function () {
+    cfg.api = ''; cfg.key = ''; lsDel('dash_api'); lsDel('dash_key'); lsDel('dash_cache'); lsDel('dash_queue');
+    serverTasks = []; queue = []; lastOk = 0; lastErr = '';
+    $('modal').className = ''; renderTasks(); renderStatus();
+  });
+
+  // =====================================================================
+  //  Weather (Open-Meteo, coordinates come from the Settings tab)
+  // =====================================================================
+  function wxIcon(code, isDay) {
+    if (code === 0) return isDay ? '☀️' : '🌙';
+    if (code === 1) return isDay ? '🌤️' : '🌙';
+    if (code === 2) return isDay ? '⛅' : '☁️';
+    if (code === 3) return '☁️';
+    if (code === 45 || code === 48) return '🌫️';
+    if (code >= 51 && code <= 57) return '🌦️';
+    if (code >= 61 && code <= 67) return '🌧️';
+    if (code >= 71 && code <= 77) return '🌨️';
+    if (code >= 80 && code <= 82) return '🌦️';
+    if (code === 85 || code === 86) return '🌨️';
+    if (code >= 95) return '⛈️';
+    return '🌡️';
+  }
+  var wxOk = false;
+  function showWeather(j) {
+    try {
+      var c = j.current, d = j.daily, html = wxIcon(c.weather_code, c.is_day === 1) + ' ' + Math.round(c.temperature_2m) + '°';
+      if (d && d.temperature_2m_max) html += '<span class="hl">' + Math.round(d.temperature_2m_max[0]) + '° / ' + Math.round(d.temperature_2m_min[0]) + '°</span>';
+      $('wx').innerHTML = html; wxOk = true;
+    } catch (e) {}
+  }
+  function loadWeather() {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + settings.lat + '&longitude=' + settings.lon +
+      '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min&temperature_unit=' + settings.unit + '&timezone=auto&forecast_days=1';
+    var xhr = new XMLHttpRequest();
+    try { xhr.open('GET', url, true); } catch (e) { return; }
+    xhr.timeout = 15000;
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) { try { showWeather(JSON.parse(xhr.responseText)); lsSet('dash_wx', xhr.responseText); } catch (e) {} }
+      else if (!wxOk) $('wx').innerHTML = '<span class="hl">weather unavailable</span>';
+    };
+    xhr.onerror = xhr.ontimeout = function () { if (!wxOk) $('wx').innerHTML = '<span class="hl">weather unavailable</span>'; };
+    xhr.send();
+  }
+
+  // =====================================================================
+  //  Kiosk housekeeping: night dim, nightly reload, wake-up sync
+  // =====================================================================
+  function hm(s) { var p = String(s || '').split(':'); return (+p[0]) * 60 + (+p[1] || 0); }
+  function housekeeping() {
+    var d = new Date(), m = d.getHours() * 60 + d.getMinutes(), a = hm(settings.dim_start), b = hm(settings.dim_end);
+    var dim = (!isNaN(a) && !isNaN(b) && a !== b) ? (a < b ? (m >= a && m < b) : (m >= a || m < b)) : false;
+    $('dim').className = dim ? 'on' : '';
+    var r = hm(settings.reload_at);
+    if (!isNaN(r) && m === r && lsGet('dash_reload') !== todayStr() && sw.state === 'idle' && !editMode) {
+      lsSet('dash_reload', todayStr());
+      window.location.reload();
+    }
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { sync(); } });
+  window.addEventListener('online', sync);
+  window.addEventListener('focus', sync);
+
+  // ---------- boot ----------
+  applyLook();
+  var cachedWx = lsGet('dash_wx');
+  if (cachedWx) { try { showWeather(JSON.parse(cachedWx)); } catch (e) {} }
+  syncButtons();
+  renderTasks();
+  renderStatus();
+  tick();
+  setInterval(tick, 100);
+  setInterval(renderStatus, 10000);
+  setInterval(housekeeping, 20000);
+  housekeeping();
+  setInterval(sync, POLL_MS);
+  setInterval(loadWeather, WEATHER_MS);
+  loadWeather();
+  sync();
+
+  if ('serviceWorker' in navigator && window.location.protocol.indexOf('http') === 0) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+  }
+})();
+</script>
 </body>
 </html>
