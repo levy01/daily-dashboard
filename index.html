@@ -71,16 +71,19 @@
     <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800/80">
       <button id="tab-clock" onclick="switchMode('clock')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 bg-indigo-600 text-white shadow-md">
         <i class="fa-regular fa-clock"></i>
-        <span>Gym Wall Clock</span>
+        <span id="label-clock" onclick="renameModeLabel(event, 'clock')" class="cursor-pointer hover:underline" title="Click to rename label">Gym Wall Clock</span>
       </button>
       <button id="tab-stopwatch" onclick="switchMode('stopwatch')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-2 text-slate-400 hover:text-slate-200">
         <i class="fa-solid fa-stopwatch"></i>
-        <span>Dead Hang Timer</span>
+        <span id="label-stopwatch" onclick="renameModeLabel(event, 'stopwatch')" class="cursor-pointer hover:underline" title="Click to rename label">Dead Hang Timer</span>
       </button>
     </div>
 
     <!-- Action Tools -->
     <div class="flex items-center space-x-2">
+      <button onclick="fetchTasksFromUrl(true)" id="sync-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition" title="Sync Tasks Now">
+        <i class="fa-solid fa-rotate" id="sync-icon"></i>
+      </button>
       <button onclick="toggleAudioBeep()" id="audio-toggle" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition" title="Toggle Countdown Beep Sound">
         <i class="fa-solid fa-volume-high" id="audio-icon"></i>
       </button>
@@ -289,6 +292,12 @@
     let currentMode = 'clock'; // 'clock' or 'stopwatch'
     let is24HourFormat = false;
     let audioEnabled = true;
+
+    // Custom Mode Labels
+    let customLabels = {
+      clock: localStorage.getItem('ipad_label_clock') || 'Gym Wall Clock',
+      stopwatch: localStorage.getItem('ipad_label_stopwatch') || 'Dead Hang Timer'
+    };
 
     // Weather State Defaults (Doral / Miami area default coordinates)
     let userLat = 25.8195;
@@ -573,6 +582,26 @@
       }
     }
 
+    // --- CUSTOM LABEL RENAMING ---
+    function renameModeLabel(event, modeKey) {
+      event.stopPropagation(); // Don't trigger tab switch when clicking text to edit
+      const currentName = customLabels[modeKey];
+      const newName = prompt(`Enter custom label for this mode:`, currentName);
+      if (newName !== null && newName.trim() !== "") {
+        const trimmed = newName.trim();
+        customLabels[modeKey] = trimmed;
+        localStorage.setItem(`ipad_label_${modeKey}`, trimmed);
+        renderModeLabels();
+      }
+    }
+
+    function renderModeLabels() {
+      const clockSpan = document.getElementById('label-clock');
+      const stopwatchSpan = document.getElementById('label-stopwatch');
+      if (clockSpan) clockSpan.textContent = customLabels.clock;
+      if (stopwatchSpan) stopwatchSpan.textContent = customLabels.stopwatch;
+    }
+
     // --- TO-DO LIST MODULE ---
     function renderTasks() {
       const categories = ['Work', 'FinTech', 'Personal'];
@@ -674,24 +703,41 @@
     }
 
     // --- FETCH TASKS VIA URL ---
+    let savedGistUrl = localStorage.getItem('ipad_dashboard_gist_url') || '';
+
     function toggleUrlModal() {
       const modal = document.getElementById('url-modal');
       const isVisible = !modal.classList.contains('opacity-0');
       if (isVisible) {
         modal.classList.add('opacity-0', 'pointer-events-none');
       } else {
+        if (savedGistUrl) {
+          document.getElementById('json-url-input').value = savedGistUrl;
+        }
         modal.classList.remove('opacity-0', 'pointer-events-none');
       }
     }
 
-    async function fetchTasksFromUrl() {
-      const urlInput = document.getElementById('json-url-input').value.trim();
+    async function fetchTasksFromUrl(isManualSync = false) {
+      let urlInput = document.getElementById('json-url-input').value.trim();
+      if (!urlInput && savedGistUrl) {
+        urlInput = savedGistUrl;
+      }
       if (!urlInput) return;
 
+      const syncIcon = document.getElementById('sync-icon');
+      if (syncIcon) syncIcon.classList.add('animate-spin');
+
       try {
-        const res = await fetch(urlInput);
+        // Append cache-busting timestamp to prevent iPad Safari from caching old Gist state
+        const cacheBustUrl = urlInput + (urlInput.includes('?') ? '&' : '?') + '_t=' + Date.now();
+        const res = await fetch(cacheBustUrl);
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const data = await res.json();
+
+        // Save URL for future auto-syncing
+        savedGistUrl = urlInput;
+        localStorage.setItem('ipad_dashboard_gist_url', urlInput);
 
         const newTasks = { Work: [], FinTech: [], Personal: [] };
         
@@ -708,10 +754,19 @@
 
         taskData = newTasks;
         renderTasks();
-        toggleUrlModal();
+        if (!isManualSync && !document.getElementById('url-modal').classList.contains('opacity-0')) {
+          toggleUrlModal();
+        }
       } catch (err) {
-        alert("Failed to fetch JSON tasks. Please verify URL CORS settings and JSON format.");
-        console.error(err);
+        if (isManualSync) {
+          console.warn("Background auto-sync failed:", err);
+        } else {
+          alert("Failed to fetch JSON tasks. Please verify URL CORS settings and JSON format.");
+        }
+      } finally {
+        if (syncIcon) {
+          setTimeout(() => syncIcon.classList.remove('animate-spin'), 600);
+        }
       }
     }
 
@@ -743,15 +798,25 @@
       updateClock();
       setInterval(updateClock, 1000);
 
-      // 2. Weather init + 15 min refresh interval
+      // 2. Render Mode Labels
+      renderModeLabels();
+
+      // 3. Weather init + 15 min refresh interval
       initGeolocation();
       setInterval(fetchWeather, 15 * 60 * 1000);
 
-      // 3. Load tasks
+      // 4. Load tasks locally initially
       loadLocalTasks();
       renderTasks();
 
-      // 4. iOS AudioContext unlock
+      // 5. If a Gist URL was previously saved, auto-fetch on boot & set up 60-second auto-refresh
+      if (savedGistUrl) {
+        fetchTasksFromUrl(true);
+        // Auto-refresh Gist every 60 seconds seamlessly in the background
+        setInterval(() => fetchTasksFromUrl(true), 60 * 1000);
+      }
+
+      // 6. iOS AudioContext unlock
       document.body.addEventListener('touchstart', function() {
         if (audioCtx.state === 'suspended') {
           audioCtx.resume();
