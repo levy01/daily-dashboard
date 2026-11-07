@@ -54,7 +54,7 @@ function onOpen() {
     .addItem('Set up / repair this sheet', 'setup')
     .addItem('Show connection info', 'showInfo')
     .addItem('Rotate secret key', 'rotateKey')
-    .addItem('Test news feed', 'testNews')
+    .addItem('Test news feed', 'testNewsMenu')
     .addToUi();
 }
 
@@ -301,12 +301,15 @@ function fetchNews_(topic) {
 }
 
 // Run once from the editor (or Dashboard > Test news feed) to grant the "connect to external service" permission.
-function testNews() {
+function testNews() {                       // run from the editor: result goes to the Execution log, no dialog
   var r = fetchNews_('finance');
   var msg = r.err ? 'FAILED: ' + r.err : 'OK: ' + r.items.length + ' stories. First: ' + (r.items[0] ? r.items[0].title : '-');
-  try { SpreadsheetApp.getUi().alert('News feed test', msg, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) { /* run from editor: see log */ }
   Logger.log(msg);
   return msg;
+}
+
+function testNewsMenu() {                   // Dashboard menu: shows the result in a dialog
+  SpreadsheetApp.getUi().alert('News feed test', testNews(), SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 // Fill in anything missing on rows typed by hand in the sheet (ID, Section, Day) and fix duplicate IDs.
