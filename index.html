@@ -315,6 +315,245 @@
     let is24HourFormat = false;
     let audioEnabled = true;
 
+    // Default Task Data
+    let taskData = {
+      Work: [],
+      FinTech: [],
+      Personal: []
+    };
+
+    // --- CLOCK MODULE ---
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+
+      let ampm = '';
+      if (!is24HourFormat) {
+        ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 becomes 12
+      }
+      const hoursStr = String(hours).padStart(2, '0');
+
+      const clockEl = document.getElementById('clock-display');
+      const ampmEl = document.getElementById('clock-ampm');
+      const dateEl = document.getElementById('clock-date');
+
+      if (clockEl) clockEl.textContent = `${hoursStr}:${minutes}:${seconds}`;
+      if (ampmEl) ampmEl.textContent = is24HourFormat ? '' : ampm;
+
+      if (dateEl) {
+        const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+        dateEl.textContent = now.toLocaleDateString('en-US', options);
+      }
+    }
+
+    function toggleTimeFormat() {
+      is24HourFormat = !is24HourFormat;
+      const btn = document.getElementById('format-btn');
+      if (btn) btn.textContent = is24HourFormat ? '24H' : '12H';
+      updateClock();
+    }
+
+    // --- STOPWATCH MODULE ---
+    let timerInterval = null;
+    let timerMs = 0;
+    let isTimerRunning = false;
+    let countdownInterval = null;
+
+    // Web Audio API Beep Generator
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq = 800, duration = 0.15) {
+      if (!audioEnabled) return;
+      try {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.warn('Audio play failed:', e);
+      }
+    }
+
+    function toggleAudioBeep() {
+      audioEnabled = !audioEnabled;
+      const icon = document.getElementById('audio-icon');
+      if (icon) {
+        icon.className = audioEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-slate-500';
+      }
+    }
+
+    function formatStopwatchTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const minutes = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const seconds = String(totalSec % 60).padStart(2, '0');
+      const tenths = Math.floor((ms % 1000) / 100);
+      return `${minutes}:${seconds}.${tenths}`;
+    }
+
+    function updateStopwatchDisplay() {
+      const display = document.getElementById('stopwatch-display');
+      if (display) display.textContent = formatStopwatchTime(timerMs);
+    }
+
+    function toggleTimer() {
+      cancelCountdown();
+      if (isTimerRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function startTimer() {
+      if (isTimerRunning) return;
+      isTimerRunning = true;
+      const startTime = Date.now() - timerMs;
+      timerInterval = setInterval(() => {
+        timerMs = Date.now() - startTime;
+        updateStopwatchDisplay();
+      }, 50);
+
+      const playIcon = document.getElementById('btn-play-icon');
+      const playText = document.getElementById('btn-play-text');
+      const playBtn = document.getElementById('btn-toggle-timer');
+
+      if (playIcon) playIcon.className = 'fa-solid fa-pause';
+      if (playText) playText.textContent = 'Pause';
+      if (playBtn) playBtn.className = 'px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-600/20 transition flex items-center space-x-2';
+    }
+
+    function pauseTimer() {
+      isTimerRunning = false;
+      clearInterval(timerInterval);
+
+      const playIcon = document.getElementById('btn-play-icon');
+      const playText = document.getElementById('btn-play-text');
+      const playBtn = document.getElementById('btn-toggle-timer');
+
+      if (playIcon) playIcon.className = 'fa-solid fa-play';
+      if (playText) playText.textContent = 'Resume';
+      if (playBtn) playBtn.className = 'px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition flex items-center space-x-2';
+    }
+
+    function resetTimer() {
+      cancelCountdown();
+      pauseTimer();
+      timerMs = 0;
+      updateStopwatchDisplay();
+      const playText = document.getElementById('btn-play-text');
+      if (playText) playText.textContent = 'Start Now';
+    }
+
+    function startWithDelay(seconds = 5) {
+      if (isTimerRunning) pauseTimer();
+      cancelCountdown();
+
+      const banner = document.getElementById('countdown-banner');
+      const countdownText = document.getElementById('countdown-text');
+      if (banner) banner.classList.remove('opacity-0');
+
+      let count = seconds;
+      if (countdownText) countdownText.textContent = `GET READY: ${count}`;
+      playBeep(600, 0.15);
+
+      countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+          if (countdownText) countdownText.textContent = `GET READY: ${count}`;
+          playBeep(600, 0.15);
+        } else {
+          cancelCountdown();
+          playBeep(1200, 0.4); // High pitch start beep
+          startTimer();
+        }
+      }, 1000);
+    }
+
+    function cancelCountdown() {
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      const banner = document.getElementById('countdown-banner');
+      if (banner) banner.classList.add('opacity-0');
+    }
+
+    // --- WEATHER MODULE ---
+    let userLat = 25.8195; // Default: Doral/Miami FL
+    let userLon = -80.3553;
+
+    function initGeolocation() {
+      fetchWeather();
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            userLat = pos.coords.latitude;
+            userLon = pos.coords.longitude;
+            const cityEl = document.getElementById('weather-city');
+            if (cityEl) cityEl.textContent = 'Local Location';
+            fetchWeather();
+          },
+          (err) => {
+            console.warn('Geolocation denied/unavailable, using default location.');
+            const cityEl = document.getElementById('weather-city');
+            if (cityEl) cityEl.textContent = 'Miami / Doral';
+          },
+          { timeout: 5000 }
+        );
+      }
+    }
+
+    async function fetchWeather() {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLat}&longitude=${userLon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=auto`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Weather API ${res.status}`);
+        const data = await res.json();
+
+        const temp = Math.round(data.current?.temperature_2m ?? data.current_weather?.temperature ?? 0);
+        const high = Math.round(data.daily?.temperature_2m_max?.[0] ?? temp);
+        const low = Math.round(data.daily?.temperature_2m_min?.[0] ?? temp);
+        const code = data.current?.weather_code ?? data.current_weather?.weathercode ?? 0;
+
+        const tempEl = document.getElementById('weather-temp');
+        const rangeEl = document.getElementById('weather-range');
+        const iconContainer = document.getElementById('weather-icon-container');
+
+        if (tempEl) tempEl.textContent = `${temp}°F`;
+        if (rangeEl) rangeEl.textContent = `H: ${high}° L: ${low}°`;
+
+        if (iconContainer) {
+          iconContainer.innerHTML = getWeatherIconHTML(code);
+        }
+      } catch (e) {
+        console.error('Weather error:', e);
+        const cityEl = document.getElementById('weather-city');
+        if (cityEl) cityEl.textContent = 'Weather Unavailable';
+      }
+    }
+
+    function getWeatherIconHTML(code) {
+      if (code === 0) return `<i class="fa-solid fa-sun text-amber-400"></i>`;
+      if (code <= 3) return `<i class="fa-solid fa-cloud-sun text-slate-300"></i>`;
+      if (code <= 48) return `<i class="fa-solid fa-smog text-slate-400"></i>`;
+      if (code <= 67) return `<i class="fa-solid fa-cloud-rain text-blue-400"></i>`;
+      if (code <= 77) return `<i class="fa-solid fa-snowflake text-indigo-300"></i>`;
+      if (code <= 82) return `<i class="fa-solid fa-cloud-showers-heavy text-blue-500"></i>`;
+      return `<i class="fa-solid fa-bolt text-yellow-400"></i>`;
+    }
+
     // Custom Mode Labels
     let customLabels = {
       clock: localStorage.getItem('ipad_label_clock') || 'Gym Wall Clock',
