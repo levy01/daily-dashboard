@@ -245,6 +245,9 @@
   <div id="modal">
     <div class="box">
       <h3 data-i18n="conn_title">Connect this device</h3>
+      <label for="inLink" data-i18n="link_label">Pairing link (easiest)</label>
+      <input id="inLink" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Paste the pairing link here" data-i18n-ph="link_ph">
+      <div class="info" id="linkInfo"></div>
       <label for="inApi" data-i18n="api_url">API URL</label>
       <input id="inApi" type="url" autocapitalize="off" autocorrect="off" placeholder="https://script.google.com/macros/s/.../exec">
       <label for="inKey" data-i18n="key">Key</label>
@@ -294,6 +297,7 @@
       delay: '{0}s delay', add_sec: '+ Section', add_to: 'Add to', today: 'Today', tomorrow: 'Tomorrow',
       hint: 'tap a task to check it off · ✎ edit · ✕ delete',
       clock: 'Clock', stopwatch: 'Stopwatch', timer: 'Timer',
+      link_label: 'Pairing link (easiest)', link_ph: 'Paste the pairing link here', link_bad: 'That does not look like a pairing link. It should contain #api=...&key=...',
       conn_title: 'Connect this device', api_url: 'API URL', key: 'Key', key_ph: '48-character key', forget: 'Forget', close: 'Close', save_sync: 'Save & sync',
       not_conn_html: 'Not connected yet.<br>Tap ⚙ and paste your API URL and key,<br>or open your pairing link on this device.',
       open_n: '{0} open', carried_n: '{0} carried', done_n: '{0} done', badge_tom: 'tomorrow', add_ph: 'Add to {0}…', add_btn: 'Add', nothing: 'Nothing queued',
@@ -320,6 +324,7 @@
       delay: 'espera de {0}s', add_sec: '+ Sección', add_to: 'Agregar a', today: 'Hoy', tomorrow: 'Mañana',
       hint: 'toca una tarea para marcarla · ✎ editar · ✕ borrar',
       clock: 'Reloj', stopwatch: 'Cronómetro', timer: 'Temporizador',
+      link_label: 'Enlace de conexión (lo más fácil)', link_ph: 'Pega aquí el enlace de conexión', link_bad: 'Eso no parece un enlace de conexión. Debe contener #api=...&key=...',
       conn_title: 'Conectar este dispositivo', api_url: 'URL de la API', key: 'Clave', key_ph: 'clave de 48 caracteres', forget: 'Olvidar', close: 'Cerrar', save_sync: 'Guardar y sincronizar',
       not_conn_html: 'Aún no está conectado.<br>Toca ⚙ y pega tu URL de la API y tu clave,<br>o abre tu enlace de conexión en este dispositivo.',
       open_n: '{0} pendientes', carried_n: '{0} arrastradas', done_n: '{0} hechas', badge_tom: 'mañana', add_ph: 'Agregar a {0}…', add_btn: 'Agregar', nothing: 'Nada pendiente',
@@ -859,7 +864,30 @@
   }
 
   // connection modal
+  // Paste the whole pairing link (https://...#api=...&key=...&lang=...) into one box: connects immediately.
+  function parsePairing(text) {
+    var h = String(text || '').replace(/\s+/g, ''), i = h.indexOf('#'), m = {};
+    if (i >= 0) h = h.slice(i + 1);
+    h.split('&').forEach(function (kv) {
+      var j = kv.indexOf('=');
+      if (j > 0) { try { m[kv.slice(0, j)] = decodeURIComponent(kv.slice(j + 1)); } catch (e) {} }
+    });
+    return (m.api && m.key && /^https:\/\/script\.google\.com\//.test(m.api)) ? m : null;
+  }
+  $('inLink').addEventListener('input', function () {
+    var v = $('inLink').value, m = parsePairing(v);
+    if (m) {
+      cfg.api = m.api; cfg.key = m.key; lsSet('dash_api', cfg.api); lsSet('dash_key', cfg.key); lastErr = '';
+      if (m.lang) setLang(m.lang);
+      $('inLink').value = ''; $('linkInfo').textContent = '';
+      $('modal').className = ''; sectionSig = ''; renderTasks(); sync();
+    } else {
+      $('linkInfo').textContent = (v.replace(/\s+/g, '').length > 25) ? tr('link_bad') : '';
+    }
+  });
+
   function openModal() {
+    $('inLink').value = ''; $('linkInfo').textContent = '';
     $('inApi').value = cfg.api; $('inKey').value = cfg.key;
     $('modalInfo').textContent = tr('modal_info', queue.length);
     $('modal').className = 'open';

@@ -35,7 +35,9 @@ Replace `index.html` in your repo with the new one and add `sw.js` next to it. C
   to any QR service.) You can also click the link under the code, or copy it to the device and open it.
   The page saves the connection and removes it from the address bar. Treat the link like a password.
 - **iPad Home Screen app:** a Home Screen icon has its own storage, so after adding it, open it and tap the
-  gear, paste the API URL and key, **Save & sync**. Do this once.
+  gear. Paste the **pairing link** (the long link from "Show connection info") into the first field, **Pairing link**.
+  It connects by itself in one step. Do this once. (You can still enter the API URL and key by hand underneath.)
+  To get the link onto the iPad, send it to yourself by email or Messages, or put it in a note, then long-press and Copy.
 - Pair the laptop and phone the same way. Each can be disconnected any time with the gear > Forget.
 
 ## 5. iPad kiosk

@@ -154,7 +154,7 @@ function showInfo() {
     open: 'Abrir el panel en este dispositivo',
     copy: 'O copia el enlace para enviarlo a otro dispositivo:',
     priv: 'Este código y este enlace dan acceso a tus tareas. Muéstralos solo a quien deba usar el panel.',
-    ipad: 'App en la pantalla de inicio del iPad: el icono tiene su propio almacenamiento. Conecta primero en Safari; para el icono, abre la app, toca el engranaje y pega la URL y la clave (Clave: '
+    ipad: 'App en la pantalla de inicio del iPad: el icono tiene su propio almacenamiento. Abre la app, toca el engranaje y pega el enlace de arriba en el primer campo (Enlace de conexión): se conecta de una vez.'
   } : {
     scan: 'Scan this code with the iPad or phone camera',
     scan2: 'Point the camera at the code and tap the banner that appears. The dashboard connects by itself.',
@@ -162,7 +162,7 @@ function showInfo() {
     open: 'Open the dashboard on this device',
     copy: 'Or copy the link to send to another device:',
     priv: 'This code and link give access to your tasks. Only show them to people who should use the dashboard.',
-    ipad: 'iPad Home Screen app: a Home Screen icon has its own storage. Pair in Safari first; for the icon, open the app, tap the gear and paste the URL and key (Key: '
+    ipad: 'iPad Home Screen app: a Home Screen icon has its own storage. Open the app, tap the gear and paste the link from above into the first field (Pairing link): it connects in one step.'
   };
   var html = HtmlService.createHtmlOutput(
     '<div style="font:16px Arial,sans-serif;line-height:1.45;text-align:center">' +
@@ -174,7 +174,7 @@ function showInfo() {
     '<p style="margin:6px 0;text-align:left;font-size:13px">' + T.copy + '</p>' +
     '<textarea readonly onclick="this.select()" style="width:100%;height:70px;font:12px monospace">' + esc_(link) + '</textarea>' +
     '<p style="color:#b00020;font-size:13px;text-align:left;margin:8px 0">' + T.priv + '</p>' +
-    '<p style="color:#666;font-size:12px;text-align:left;margin:4px 0">' + T.ipad + esc_(key) + ').</p>' +
+    '<p style="color:#666;font-size:12px;text-align:left;margin:4px 0">' + T.ipad + '</p>' +
     '</div>' +
     // The QR is drawn here in the browser by a small open-source library; the link is never sent anywhere.
     '<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>' +

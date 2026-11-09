@@ -48,7 +48,8 @@ The caretaker does the one-time setup on their own computer, then connects the o
    screen, tap the banner that appears. The dashboard opens already connected, in the right language.
 3. Leave the dashboard open in Safari and set Settings > Display & Brightness > Auto-Lock to **Never** (and keep the
    tablet plugged in). If you add it to the Home Screen instead, that icon has its own storage: open it, tap the gear,
-   and paste the URL and key once. Pairing in Safari does not carry over to the icon.
+   and paste the pairing link into the first field once (send the link to the tablet by email or Messages, then
+   long-press and Copy). Pairing in Safari does not carry over to the icon.
 4. The caretaker can later add or edit tasks from their own phone or laptop (same QR/link), or by typing straight
    into the Sheet. The tablet picks changes up within a minute.
 5. Keep the QR code and pairing link private, since they give access to the tasks.
