@@ -41,6 +41,7 @@ var DEFAULTS = [
   ['pomodoro_min', '25'],                 // timer presets, minutes
   ['short_min', '5'],
   ['long_min', '15'],
+  ['repeat_min', '5'],                    // repeating clock-aligned timer (trading), minutes
   ['news_topics', 'finance,health,sports,business,education'],  // comma separated, up to 6
   ['language', 'en']                      // en or es
 ];
@@ -500,6 +501,7 @@ function readSettings_(ss) {
     pomodoro_min: num_(kv.pomodoro_min, 25, 1, 180),
     short_min: num_(kv.short_min, 5, 1, 180),
     long_min: num_(kv.long_min, 15, 1, 180),
+    repeat_min: num_(kv.repeat_min, 5, 1, 60),
     news_topics: String(kv.news_topics || '').split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s; }).slice(0, 6)
   };
 }

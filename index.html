@@ -121,6 +121,11 @@
   #tMain.stop { background: #c0392b; }
   #tReset { background: #2a2a2e; color: #d0d0d4; }
   #pomo { font-size: 3vw; color: #6b6b70; margin-top: 1vw; }
+  #pomo button { background: #1b1b1e; color: #9a9aa0; font-size: inherit; padding: 0.8vw 2.4vw; border-radius: 1.2vw; }
+  #dateWrap { position: relative; width: 100%; text-align: center; }
+  #repPill { display: none; background: #12261a; color: #2bff6e; font-size: 3.6vw; padding: 1.2vw 3vw; border-radius: 2vw; margin: 0 0 2vw; cursor: pointer; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #repPill.on { display: inline-block; }
+  #repPill.warn { background: #3a2a0a; color: #ffbe4a; }
 
   /* ---------- popups (forecast, news) + clickable footer ---------- */
   #wx, #date { cursor: pointer; }
@@ -186,6 +191,9 @@
     #presets button { font-size: 1.9vw; padding: 0.7vw 1.8vw; border-radius: 1vw; margin: 0 0.5vw; }
     #tcontrols button { font-size: 3vw; padding: 1.1vw 4.5vw; border-radius: 1.4vw; min-width: 21vw; }
     #pomo { font-size: 1.5vw; margin-top: 0.5vw; }
+    #dateWrap { order: 2; width: auto; }
+    #modeSwitch .pill { white-space: nowrap; }
+    #repPill { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); font-size: 1.9vw; padding: 0.6vw 1.6vw; border-radius: 1.2vw; margin: 0 0 0 1.6vw; }
   }
 </style>
 </head>
@@ -225,7 +233,7 @@
     <div id="modeSwitch"><div class="pill">
       <button id="modeClock" type="button" class="on" data-i18n="clock">Clock</button><button id="modeSw" type="button" data-i18n="stopwatch">Stopwatch</button><button id="modeTm" type="button" data-i18n="timer">Timer</button>
     </div></div>
-    <div id="date"></div>
+    <div id="dateWrap"><div id="repPill"></div><div id="date"></div></div>
     <div id="footR">
       <div id="wx"></div>
       <div id="status"></div>
@@ -285,7 +293,7 @@
   var DEFAULT_SETTINGS = {
     sections: ['Work', 'FinTech', 'Personal'], color: 'red', clock24h: false, countdown: 5,
     lat: 25.7617, lon: -80.1918, unit: 'fahrenheit', dim_start: '22:00', dim_end: '06:00',
-    reload_at: '03:00', evening_hour: 17, language: 'en', pomodoro_min: 25, short_min: 5, long_min: 15, news_topics: []
+    reload_at: '03:00', evening_hour: 17, language: 'en', pomodoro_min: 25, short_min: 5, long_min: 15, repeat_min: 5, news_topics: []
   };
 
   // ---------- language (en / es). tr('key', arg0, arg1) fills {0}, {1} ----------
@@ -307,7 +315,7 @@
       err_offline: 'offline', err_bad_url: 'bad URL', err_bad_resp: 'bad response',
       modal_info: '{0} change(s) waiting to sync. Tip: you can also pair by opening this page with #api=...&key=... added to the address.',
       wx_unavail: 'weather unavailable',
-      pomodoro: 'Pomodoro', short_break: 'Short Break', long_break: 'Long Break', min_n: '{0} min', pomo_today: 'Pomodoros today: {0}', stop_timer: 'Stop the current timer?',
+      pomodoro: 'Pomodoro', short_break: 'Short Break', long_break: 'Long Break', min_n: '{0} min', pomo_today: 'Pomodoros today: {0}', stop_timer: 'Stop the current timer?', repeat: '↻ Repeat', beep_end: 'Beep: at end', beep_warn: 'Beep: 10 s before', beep_both: 'Beep: both',
       rename_prompt: 'Rename section "{0}" to:', dup: 'There is already a section called "{0}".',
       rm_nonempty: '"{0}" still has {1} task(s). Finish or delete them first (or just rename the section).',
       rm_confirm: 'Remove the empty section "{0}"?', max_sec: 'Five sections is the maximum.', new_prompt: 'New section name (e.g. Fitness, Groceries):', rm_title: 'Remove section',
@@ -334,7 +342,7 @@
       err_offline: 'sin internet', err_bad_url: 'URL inválida', err_bad_resp: 'respuesta inválida',
       modal_info: '{0} cambio(s) esperando sincronizar. Consejo: también puedes conectar abriendo esta página con #api=...&key=... al final de la dirección.',
       wx_unavail: 'clima no disponible',
-      pomodoro: 'Pomodoro', short_break: 'Descanso corto', long_break: 'Descanso largo', min_n: '{0} min', pomo_today: 'Pomodoros hoy: {0}', stop_timer: '¿Detener el temporizador actual?',
+      pomodoro: 'Pomodoro', short_break: 'Descanso corto', long_break: 'Descanso largo', min_n: '{0} min', pomo_today: 'Pomodoros hoy: {0}', stop_timer: '¿Detener el temporizador actual?', repeat: '↻ Repetir', beep_end: 'Pitido: al final', beep_warn: 'Pitido: 10 s antes', beep_both: 'Pitido: ambos',
       rename_prompt: 'Cambiar el nombre de la sección "{0}" a:', dup: 'Ya existe una sección llamada "{0}".',
       rm_nonempty: '"{0}" todavía tiene {1} tarea(s). Termínalas o bórralas primero (o solo cambia el nombre de la sección).',
       rm_confirm: '¿Quitar la sección vacía "{0}"?', max_sec: 'El máximo es de cinco secciones.', new_prompt: 'Nombre de la nueva sección (p. ej. Ejercicio, Compras):', rm_title: 'Quitar sección',
@@ -425,7 +433,8 @@
   //  Clock + stopwatch
   // =====================================================================
   var clockEl = $('clock'), dateEl = $('date');
-  var lastDisp = '', lastCls = '', lastDate = '', lastMainLabel = '';
+  var lastDisp = '', lastCls = '', lastDate = '', lastMainLabel = '', lastPill = '';
+  var repPillEl = $('repPill');
   var mode = 'clock';
   var sw = { state: 'idle', start: 0, acc: 0, cdEnd: 0, lastCd: -1 };  // idle | countdown | running | paused
 
@@ -442,7 +451,17 @@
       if (rem <= 0) { sw.state = 'running'; sw.start = sw.cdEnd; sw.acc = 0; sw.lastCd = -1; beep(1320, 0.6); syncButtons(); }
       else if (rem !== sw.lastCd) { sw.lastCd = rem; if (rem <= 3) beep(880, 0.15); }
     }
+    if (tm.state === 'running' && tm.preset === 'rep' && tm.warned !== tm.end && tm.end - now <= 10000) {
+      tm.warned = tm.end;
+      if (repBeepMode() !== 'end') beep(660, 0.25);              // 10-second heads-up
+    }
     if (tm.state === 'running' && now >= tm.end) timerDone();
+    var repOn = tm.state === 'running' && tm.preset === 'rep';
+    if (repOn && mode !== 'timer') {
+      var rs = Math.ceil(tmRemaining() / 1000), rt = '↻ ' + pad(Math.floor(rs / 60)) + ':' + pad(rs % 60);
+      if (rt !== lastPill) { lastPill = rt; repPillEl.textContent = rt; }
+      repPillEl.className = 'on' + (rs <= 10 ? ' warn' : '');
+    } else if (repPillEl.className) { repPillEl.className = ''; lastPill = ''; }
     if (mode === 'sw') {
       if (sw.state === 'countdown') {
         setDisp('' + Math.max(1, Math.ceil((sw.cdEnd - now) / 1000)), 'sw-cd');
@@ -530,8 +549,16 @@
   var PRESETS = {
     pomo: { label: 'pomodoro', key: 'pomodoro_min' },
     short: { label: 'short_break', key: 'short_min' },
-    long: { label: 'long_break', key: 'long_min' }
+    long: { label: 'long_break', key: 'long_min' },
+    rep: { label: 'repeat', key: 'repeat_min' }                 // repeating, clock-aligned (trading bars)
   };
+  var REP_MODES = ['end', 'warn', 'both'];
+  function repBeepMode() { var m = lsGet('dash_repbeep'); return REP_MODES.indexOf(m) >= 0 ? m : 'end'; }
+  // Next wall-clock mark (e.g. :00, :05, :10 ... for 5 min) strictly after "now", in the device's local time.
+  function repNext(now) {
+    var P = presetMs('rep'), off = new Date(now).getTimezoneOffset() * 60000;
+    return (Math.floor((now - off) / P) + 1) * P + off;
+  }
   var tm = { state: 'idle', preset: 'pomo', end: 0, rem: 0 };   // idle | running | paused
   var pomo = jget('dash_pomo', { day: '', n: 0 });
 
@@ -545,18 +572,25 @@
 
   function timerButtons() {
     var html = '';
-    ['pomo', 'short', 'long'].forEach(function (p) {
+    ['pomo', 'short', 'long', 'rep'].forEach(function (p) {
       html += '<button type="button" data-p="' + p + '"' + (tm.preset === p ? ' class="on"' : '') + '>' + tr(PRESETS[p].label) +
         '<small>' + tr('min_n', Math.round(presetMs(p) / 60000)) + '</small></button>';
     });
     if ($('presets').getAttribute('data-sig') !== html) { $('presets').setAttribute('data-sig', html); $('presets').innerHTML = html; }
-    $('tMain').textContent = tm.state === 'running' ? tr('pause') : (tm.state === 'paused' ? tr('resume') : tr('start'));
+    var isRep = tm.preset === 'rep';
+    $('tMain').textContent = tm.state === 'running' ? (isRep ? tr('stop') : tr('pause')) : (tm.state === 'paused' ? tr('resume') : tr('start'));
     $('tMain').className = tm.state === 'running' ? 'stop' : '';
-    $('pomo').textContent = tr('pomo_today', pomoCount());
+    if (isRep) $('pomo').innerHTML = '<button type="button" id="repBeep">' + tr('beep_' + repBeepMode()) + '</button>';
+    else $('pomo').textContent = tr('pomo_today', pomoCount());
     lastDisp = '';
   }
 
   function timerDone() {
+    if (tm.preset === 'rep') {                                    // restart on the next clock mark; runs until stopped
+      if (repBeepMode() !== 'warn') beep(988, 0.35);
+      tm.end = repNext(Date.now());
+      return;
+    }
     tm.state = 'idle';
     beep(880, 0.25); setTimeout(function () { beep(880, 0.25); }, 400); setTimeout(function () { beep(1320, 0.7); }, 800);
     if (tm.preset === 'pomo') {
@@ -569,12 +603,23 @@
   $('tMain').addEventListener('click', function () {
     unlockAudio();
     var now = Date.now();
+    if (tm.preset === 'rep') {
+      if (tm.state === 'idle') { tm.end = repNext(now); tm.warned = 0; tm.state = 'running'; } else tm.state = 'idle';
+      timerButtons(); tick(); return;
+    }
     if (tm.state === 'idle') { tm.end = now + presetMs(tm.preset); tm.state = 'running'; }
     else if (tm.state === 'running') { tm.rem = tmRemaining(); tm.state = 'paused'; }
     else { tm.end = now + tm.rem; tm.state = 'running'; }
     timerButtons(); tick();
   });
   $('tReset').addEventListener('click', function () { tm.state = 'idle'; timerButtons(); tick(); });
+  $('pomo').addEventListener('click', function (e) {
+    if (!e.target || e.target.id !== 'repBeep') return;
+    unlockAudio();
+    lsSet('dash_repbeep', REP_MODES[(REP_MODES.indexOf(repBeepMode()) + 1) % 3]);
+    timerButtons();
+  });
+  repPillEl.addEventListener('click', function () { unlockAudio(); setMode('timer'); });
   $('presets').addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('[data-p]') : null;
     if (!b) return;

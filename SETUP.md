@@ -65,6 +65,11 @@ inside the app so stray swipes can't exit it.
 - **Timer:** footer switch > **Timer**. Pomodoro / Short Break / Long Break presets. When one finishes it beeps and
   selects the next (a Long Break after every 4th Pomodoro); tap Start to begin it. Lengths come from the
   Settings tab: `pomodoro_min`, `short_min`, `long_min`.
+- **Repeat timer (trading):** Timer > **↻ Repeat**. Start it once and it counts down to the next clock mark (:00, :05,
+  :10 ...), beeps, and restarts on the next mark until you tap Stop. While it runs, a small green `↻ 02:41` pill
+  appears next to the mode switch on the Clock and Stopwatch views (tap it to jump to the Timer). The button under the
+  timer picks the beep: at the end, 10 seconds before, or both (remembered per device). Length: `repeat_min` on the
+  Settings tab (default 5).
 - **Forecast:** tap the weather in the footer for the 5-day outlook.
 - **News:** tap the date. Topics come from the Settings tab row `news_topics` (comma separated, up to 6, e.g.
   `finance,health,sports,business,education`). Headlines come from Google News through your script and are
