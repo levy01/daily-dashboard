@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <title>Daily Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Daily Dashboard">
@@ -194,6 +198,33 @@
     #dateWrap { order: 2; width: auto; }
     #modeSwitch .pill { white-space: nowrap; }
     #repPill { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); font-size: 1.9vw; padding: 0.6vw 1.6vw; border-radius: 1.2vw; margin: 0 0 0 1.6vw; }
+  }
+
+  /* ---------- relaxed desktop browser layout (mouse + wide window only; iPad/phone unchanged) ---------- */
+  @media (min-width: 821px) and (hover: hover) and (pointer: fine) {
+    :root { --tf: min(1.9vw, 26px); }
+    body { padding: 1.6vw max(2.4vw, calc((100vw - 1480px) / 2)) 1.4vw; }
+    #clock { font-size: min(19.5vw, 22vh); }
+    #controls { margin-top: 1.2vw; }
+    #controls button, #tcontrols button { font-size: min(3vw, 34px); padding: min(1.1vw, 14px) min(4.5vw, 56px); border-radius: min(1.4vw, 16px); min-width: min(21vw, 260px); }
+    #tbar { margin-top: 1.2vw; }
+    #presets { margin-bottom: min(1.2vw, 16px); }
+    #presets button { font-size: min(1.9vw, 22px); padding: min(0.7vw, 9px) min(1.8vw, 24px); border-radius: min(1vw, 12px); margin: 0 min(0.5vw, 7px); }
+    #pomo { font-size: min(1.5vw, 18px); margin-top: min(0.8vw, 10px); }
+    #editbar { font-size: min(1.8vw, 20px); margin-top: 1.4vw; }
+    #lists { margin-top: min(2.4vw, 34px); padding-top: min(2vw, 28px); }
+    .col { padding: 0 min(2.2vw, 36px); }
+    .col:first-child { padding-left: 0; }
+    .colhead { margin-bottom: min(1.2vw, 16px); }
+    .colhead h2 { font-size: min(1.7vw, 22px); }
+    .cnt { font-size: min(1.3vw, 16px); }
+    .task { padding: 0.7em 0.2em 0.7em 0; }
+    #foot { padding-top: min(1.4vw, 20px); }
+    #date { font-size: min(3vw, 38px); }
+    #modeSwitch button { font-size: min(1.8vw, 21px); padding: min(0.8vw, 10px) min(1.6vw, 20px); }
+    #wx { font-size: min(2.6vw, 32px); }
+    #status { font-size: 12px; }
+    #repPill { font-size: min(1.8vw, 21px); padding: min(0.6vw, 8px) min(1.6vw, 20px); }
   }
 </style>
 </head>
