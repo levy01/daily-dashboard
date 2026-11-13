@@ -82,6 +82,11 @@ inside the app so stray swipes can't exit it.
   dim or lock the screen (iOS / iPadOS 16.4+ and Android Chrome). It lets go when you pause, reset or the timer ends.
   On older iPads this is not available, so use Settings > Display & Brightness > Auto-Lock > Never.
 
+- **Clock colour:** tap the gear and pick a swatch (red, green, cyan, amber, purple, white), or type any hex code such as
+  `#ff8800` in the box under it. The choice is saved to the `color` row on the Settings tab, so every device follows
+  within a minute. You can also edit that row in the Sheet directly (a name or a hex code). Upgrading: paste the new
+  `Code.gs` and deploy a new version, otherwise the pick only changes the device you used.
+
 ## Troubleshooting
 - Status line says **wrong key**: re-copy the key from Dashboard > Show connection info (gear > paste).
 - Says **bad response** or never syncs: the deployment is probably "Only me" or an old version. Re-check step 2.

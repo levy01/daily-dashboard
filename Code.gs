@@ -279,6 +279,12 @@ function applyOps_(rows, ops, settings, today, dirty) {
       return;
     }
 
+    if (op.op === 'setColor') {                         // clock colour picked on a device: save it to the Settings tab
+      var cv = cleanColor_(op.value);
+      if (cv) { settings.color = cv; writeSetting_('color', cv); }
+      return;
+    }
+
     if (op.op === 'add') {
       if (id in index) return;                          // idempotent: retries never duplicate
       var text = cleanText_(op.text, MAX_TEXT);
@@ -338,6 +344,17 @@ function sectionOp_(op, rows, settings, dirty) {
   }
   settings.sections = s;
   writeSetting_('sections', s.join(','));
+}
+
+// A colour name from the list, or a hex code like #ff8800 (also accepts ff8800 and #f80).
+function cleanColor_(v) {
+  var s = String(v || '').trim().toLowerCase();
+  if (/^(red|green|cyan|amber|purple|white)$/.test(s)) return s;
+  var m = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/.exec(s);
+  if (!m) return '';
+  var h = m[1];
+  if (h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+  return '#' + h;
 }
 
 function cleanSection_(v) { return cleanText_(String(v || '').replace(/,/g, ' '), MAX_SECTION); }

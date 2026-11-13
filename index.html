@@ -100,7 +100,11 @@
   #dim.on { opacity: 0.62; }
   #modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.82); z-index: 30; align-items: center; justify-content: center; padding: 4vw; }
   #modal.open { display: flex; }
-  #modal .box { background: #151518; border: 1px solid #2c2c31; border-radius: 16px; padding: 22px; width: 100%; max-width: 560px; }
+  #modal .box { background: #151518; border: 1px solid #2c2c31; border-radius: 16px; padding: 22px; width: 100%; max-width: 560px; max-height: 94%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  #swatches { display: flex; flex-wrap: wrap; margin-bottom: 10px; }
+  #swatches button { width: 38px; height: 38px; border-radius: 19px; margin: 0 10px 8px 0; border: 3px solid transparent; }
+  #swatches button.on { border-color: #fff; }
+  #inColor.bad { border-color: #c0392b; }
   #modal h3 { font-size: 20px; margin-bottom: 14px; }
   #modal label { display: block; font-size: 13px; color: #8a8a8e; margin: 12px 0 5px; text-transform: uppercase; letter-spacing: 0.08em; }
   #modal input { width: 100%; background: #0c0c0e; border: 1px solid #2c2c31; border-radius: 10px; padding: 12px; font-size: 16px; -webkit-user-select: text; user-select: text; }
@@ -292,6 +296,9 @@
       <label for="inKey" data-i18n="key">Key</label>
       <input id="inKey" type="text" autocapitalize="off" autocorrect="off" placeholder="48-character key" data-i18n-ph="key_ph">
       <div class="info" id="modalInfo"></div>
+      <label data-i18n="color_label">Clock color</label>
+      <div id="swatches"></div>
+      <input id="inColor" type="text" maxlength="7" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="#ff8800" data-i18n-ph="color_ph">
       <div class="row">
         <button id="mForget" type="button" class="danger" data-i18n="forget">Forget</button>
         <button id="mClose" type="button" data-i18n="close">Close</button>
@@ -346,7 +353,7 @@
       err_offline: 'offline', err_bad_url: 'bad URL', err_bad_resp: 'bad response',
       modal_info: '{0} change(s) waiting to sync. Tip: you can also pair by opening this page with #api=...&key=... added to the address.',
       wx_unavail: 'weather unavailable',
-      pomodoro: 'Pomodoro', short_break: 'Short Break', long_break: 'Long Break', min_n: '{0} min', pomo_today: 'Pomodoros today: {0}', stop_timer: 'Stop the current timer?', repeat: '↻ Repeat', beep_end: 'Beep: at end', beep_warn: 'Beep: 10 s before', beep_both: 'Beep: both',
+      pomodoro: 'Pomodoro', short_break: 'Short Break', long_break: 'Long Break', min_n: '{0} min', pomo_today: 'Pomodoros today: {0}', stop_timer: 'Stop the current timer?', repeat: '↻ Repeat', beep_end: 'Beep: at end', beep_warn: 'Beep: 10 s before', beep_both: 'Beep: both', color_label: 'Clock color', color_ph: 'or custom: #ff8800',
       rename_prompt: 'Rename section "{0}" to:', dup: 'There is already a section called "{0}".',
       rm_nonempty: '"{0}" still has {1} task(s). Finish or delete them first (or just rename the section).',
       rm_confirm: 'Remove the empty section "{0}"?', max_sec: 'Five sections is the maximum.', new_prompt: 'New section name (e.g. Fitness, Groceries):', rm_title: 'Remove section',
@@ -373,7 +380,7 @@
       err_offline: 'sin internet', err_bad_url: 'URL inválida', err_bad_resp: 'respuesta inválida',
       modal_info: '{0} cambio(s) esperando sincronizar. Consejo: también puedes conectar abriendo esta página con #api=...&key=... al final de la dirección.',
       wx_unavail: 'clima no disponible',
-      pomodoro: 'Pomodoro', short_break: 'Descanso corto', long_break: 'Descanso largo', min_n: '{0} min', pomo_today: 'Pomodoros hoy: {0}', stop_timer: '¿Detener el temporizador actual?', repeat: '↻ Repetir', beep_end: 'Pitido: al final', beep_warn: 'Pitido: 10 s antes', beep_both: 'Pitido: ambos',
+      pomodoro: 'Pomodoro', short_break: 'Descanso corto', long_break: 'Descanso largo', min_n: '{0} min', pomo_today: 'Pomodoros hoy: {0}', stop_timer: '¿Detener el temporizador actual?', repeat: '↻ Repetir', beep_end: 'Pitido: al final', beep_warn: 'Pitido: 10 s antes', beep_both: 'Pitido: ambos', color_label: 'Color del reloj', color_ph: 'o personalizado: #ff8800',
       rename_prompt: 'Cambiar el nombre de la sección "{0}" a:', dup: 'Ya existe una sección llamada "{0}".',
       rm_nonempty: '"{0}" todavía tiene {1} tarea(s). Termínalas o bórralas primero (o solo cambia el nombre de la sección).',
       rm_confirm: '¿Quitar la sección vacía "{0}"?', max_sec: 'El máximo es de cinco secciones.', new_prompt: 'Nombre de la nueva sección (p. ej. Ejercicio, Compras):', rm_title: 'Quitar sección',
@@ -687,7 +694,7 @@
         for (var id in map) if (String(map[id].section).toLowerCase() === String(op.from).toLowerCase()) map[id].section = op.to;
         return;
       }
-      if (op.op === 'secAdd' || op.op === 'secDel') return;
+      if (op.op === 'secAdd' || op.op === 'secDel' || op.op === 'setColor') return;
       applyOp(map, order, op);
     });
     return order.filter(function (id) { return map[id]; }).map(function (id) { return map[id]; });
@@ -894,6 +901,7 @@
   function applyRemoteSettings(s) {
     if (!s) return;
     if (s.language) setLang(s.language);
+    queue.forEach(function (op) { if (op.op === 'setColor') s.color = op.value; });   // a colour pick not yet synced wins
     var changed = JSON.stringify(s) !== JSON.stringify(jget('dash_settings', {}));
     for (var k in DEFAULT_SETTINGS) if (s[k] !== undefined && s[k] !== null && s[k] !== '') settings[k] = s[k];
     if (!(settings.sections instanceof Array) || !settings.sections.length) settings.sections = DEFAULT_SETTINGS.sections;
@@ -902,8 +910,46 @@
     if (changed) loadWeather();
   }
 
+  // Colour value: a name from COLORS, or a hex code (#rrggbb / rrggbb / #rgb). Returns the cleaned value or ''.
+  function cleanColor(v) {
+    var s = String(v || '').trim().toLowerCase();
+    if (COLORS[s]) return s;
+    var m = /^#?([0-9a-f]{6}|[0-9a-f]{3})$/.exec(s);
+    if (!m) return '';
+    var h = m[1];
+    if (h.length === 3) h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+    return '#' + h;
+  }
+  function colorPair(v) {
+    var k = cleanColor(v);
+    if (!k) return COLORS.red;
+    if (COLORS[k]) return COLORS[k];
+    var n = parseInt(k.slice(1), 16);
+    return [k, 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',0.32)'];
+  }
+  function swatches() {
+    var cur = cleanColor(settings.color) || 'red', html = '';
+    for (var k in COLORS) html += '<button type="button" data-c="' + k + '" title="' + k + '" style="background:' + COLORS[k][0] + '"' + (cur === k ? ' class="on"' : '') + '></button>';
+    $('swatches').innerHTML = html;
+    $('inColor').value = (cur.charAt(0) === '#') ? cur : '';
+    $('inColor').className = '';
+  }
+  function chooseColor(v) {
+    var k = cleanColor(v);
+    if (!k) { $('inColor').className = 'bad'; return; }
+    settings.color = k;
+    var s = jget('dash_settings', {}); s.color = k; lsSet('dash_settings', JSON.stringify(s));
+    applyLook(); swatches();
+    enqueue({ op: 'setColor', id: newId(), value: k });        // saved to the Settings tab, so every device follows
+  }
+  $('swatches').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-c]') : null;
+    if (b) chooseColor(b.getAttribute('data-c'));
+  });
+  $('inColor').addEventListener('change', function () { if ($('inColor').value.trim()) chooseColor($('inColor').value); else $('inColor').className = ''; });
+
   function applyLook() {
-    var c = COLORS[String(settings.color).toLowerCase()] || COLORS.red;
+    var c = colorPair(settings.color);
     document.documentElement.style.setProperty('--clock', c[0]);
     document.documentElement.style.setProperty('--glow', c[1]);
     lastMainLabel = ''; syncButtons();
@@ -966,6 +1012,7 @@
     $('inLink').value = ''; $('linkInfo').textContent = '';
     $('inApi').value = cfg.api; $('inKey').value = cfg.key;
     $('modalInfo').textContent = tr('modal_info', queue.length);
+    swatches();
     $('modal').className = 'open';
   }
   $('btnGear').addEventListener('click', openModal);
